@@ -11,29 +11,39 @@ class LaboratoryService:
         records = laboratory_repo.search_laboratories(product_or_test=product_or_test, location=location)
 
         labs = []
+        citations = []
+        seen_urls = set()
+
         for r in records:
+            is_demo = r.get("is_demo", False)
+            source_url = r.get("source_url", "https://lims.bis.gov.in/home/labs/")
+
             labs.append(
                 LaboratoryItem(
                     name=r["name"],
-                    location=f"{r['location']}, {r.get('state', '')}".strip(", "),
+                    location=f"{r['location']}".strip(),
                     scope_or_capabilities=r.get("scope_of_testing", "Product conformity testing"),
-                    recognition_status=r.get("recognition_status", "Recognized"),
-                    source_url=r.get("source_url", "https://www.bis.gov.in"),
-                    is_demo=r.get("is_demo", True),
-                    demo_badge=settings.DEMO_DATA_NOTICE if r.get("is_demo", True) else None
+                    recognition_status=r.get("recognition_status", "BIS LIMS Recognized"),
+                    source_url=source_url,
+                    is_demo=is_demo,
+                    demo_badge=settings.DEMO_DATA_NOTICE if is_demo else None
                 )
             )
 
-        citations = [
-            SourceCitation(
-                document_title="BIS Laboratory Directory (Demo Reference)",
-                section="Recognized Testing Laboratories",
-                page_number=1,
-                url="https://www.bis.gov.in/laboratory-services",
-                is_demo=True,
-                demo_badge=settings.DEMO_DATA_NOTICE
-            )
-        ]
+            if source_url not in seen_urls:
+                seen_urls.add(source_url)
+                citations.append(
+                    SourceCitation(
+                        document_title="BIS LIMS Laboratory Directory" if not is_demo else "BIS Laboratory Directory (Demo Reference)",
+                        section=f"Recognized Testing Labs ({r.get('location', 'India')})",
+                        page_number=1,
+                        url=source_url,
+                        is_demo=is_demo,
+                        demo_badge=settings.DEMO_DATA_NOTICE if is_demo else None
+                    )
+                )
+
+        has_demo = any(l.is_demo for l in labs)
 
         if language == "hi":
             summary = f"उत्पाद/परीक्षण '{product_or_test}' के लिए प्रयोगशाला रिकॉर्ड प्राप्त हुए।"
@@ -47,8 +57,8 @@ class LaboratoryService:
             laboratories=labs,
             sources=citations,
             disclaimer=disclaimer,
-            is_demo=True,
-            demo_badge=settings.DEMO_DATA_NOTICE
+            is_demo=has_demo,
+            demo_badge=settings.DEMO_DATA_NOTICE if has_demo else None
         )
 
 
