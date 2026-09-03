@@ -12,8 +12,8 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: Optional[str] = None
     GEMINI_MODEL: str = "gemini-2.5-flash"
     
-    # Embedding model and dimension (dynamically configurable per embedding provider)
-    EMBEDDING_MODEL: str = "models/text-embedding-004"
+    # Embedding model and dimension (using models/gemini-embedding-001 with 768 dim)
+    EMBEDDING_MODEL: str = "models/gemini-embedding-001"
     EMBEDDING_DIMENSION: int = 768
 
     # Supabase Configuration

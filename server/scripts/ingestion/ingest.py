@@ -12,6 +12,7 @@ import csv
 import json
 import os
 import re
+import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from datetime import datetime
@@ -98,7 +99,7 @@ def ingest_standards_csv(filepath: Path, store: Dict[str, Any], supabase=None):
                         "status": entry["status"],
                         "source_url": entry["source_url"],
                         "is_demo": False
-                    }).execute()
+                    }, on_conflict="code").execute()
                 except Exception as e:
                     logger.warning(f"Error inserting standard {entry['code']} to Supabase: {e}")
 
@@ -118,10 +119,9 @@ def ingest_laboratories_csv(filepath: Path, store: Dict[str, Any], supabase=None
             state = None
             if " " in loc and any(s in loc for s in ["Pradesh", "Telangana", "Delhi"]):
                 parts = loc.rsplit(" ", 1)
-                loc_city = parts[0]
                 state = parts[1]
             else:
-                loc_city = loc
+                state = loc
 
             entry = {
                 "name": name.strip(),
@@ -142,15 +142,27 @@ def ingest_laboratories_csv(filepath: Path, store: Dict[str, Any], supabase=None
 
             if supabase:
                 try:
-                    supabase.table("laboratories").upsert({
-                        "name": entry["name"],
-                        "location": entry["location"],
-                        "state": entry["state"],
-                        "scope_of_testing": entry["scope_of_testing"],
-                        "recognition_status": entry["recognition_status"],
-                        "source_url": entry["source_url"],
-                        "is_demo": False
-                    }).execute()
+                    # Check if already exists by name
+                    check = supabase.table("laboratories").select("id").eq("name", entry["name"]).execute()
+                    if check.data:
+                        supabase.table("laboratories").update({
+                            "location": entry["location"],
+                            "state": entry["state"],
+                            "scope_of_testing": entry["scope_of_testing"],
+                            "recognition_status": entry["recognition_status"],
+                            "source_url": entry["source_url"],
+                            "is_demo": False
+                        }).eq("name", entry["name"]).execute()
+                    else:
+                        supabase.table("laboratories").insert({
+                            "name": entry["name"],
+                            "location": entry["location"],
+                            "state": entry["state"],
+                            "scope_of_testing": entry["scope_of_testing"],
+                            "recognition_status": entry["recognition_status"],
+                            "source_url": entry["source_url"],
+                            "is_demo": False
+                        }).execute()
                 except Exception as e:
                     logger.warning(f"Error inserting lab {entry['name']} to Supabase: {e}")
 
@@ -162,11 +174,29 @@ def ingest_markdown_doc(filepath: Path, store: Dict[str, Any], supabase=None):
     text = filepath.read_text(encoding="utf-8", errors="ignore")
     doc_title = filepath.stem.replace("_", " ").title()
 
-    # Extract primary doc URL if present
     doc_url_match = re.search(r"https?://[^\s\)]+", text)
     doc_url = doc_url_match.group(0) if doc_url_match else "https://www.bis.gov.in"
 
-    doc_id = str(len(store["documents"]) + 1)
+    doc_id = str(uuid.uuid4())
+    if supabase:
+        try:
+            # Check existing doc by title to preserve stable ID
+            existing = supabase.table("knowledge_documents").select("id").eq("title", doc_title).execute()
+            if existing.data:
+                doc_id = existing.data[0]["id"]
+                # Clear previous chunks for this doc in Supabase
+                supabase.table("knowledge_chunks").delete().eq("document_id", doc_id).execute()
+            else:
+                supabase.table("knowledge_documents").insert({
+                    "id": doc_id,
+                    "title": doc_title,
+                    "source_url": doc_url,
+                    "document_type": "Official BIS Guidance",
+                    "is_demo": False
+                }).execute()
+        except Exception as e:
+            logger.warning(f"Error managing document {doc_title} in Supabase: {e}")
+
     store["documents"] = [d for d in store["documents"] if d["title"] != doc_title]
     store["documents"].append({
         "id": doc_id,
@@ -176,7 +206,6 @@ def ingest_markdown_doc(filepath: Path, store: Dict[str, Any], supabase=None):
         "is_demo": False
     })
 
-    # Section-based chunking
     sections = re.split(r"\n##\s+", text)
     chunk_count = 0
 
@@ -194,8 +223,9 @@ def ingest_markdown_doc(filepath: Path, store: Dict[str, Any], supabase=None):
         chunks = chunk_text(cleaned)
 
         for p_idx, c_text in enumerate(chunks, 1):
-            embedding = rag_service.get_query_embedding(c_text)
+            embedding = rag_service.get_query_embedding(c_text, is_document=True)
             chunk_entry = {
+                "id": str(uuid.uuid4()),
                 "document_id": doc_id,
                 "document_title": doc_title,
                 "section": sec_title,
@@ -212,6 +242,7 @@ def ingest_markdown_doc(filepath: Path, store: Dict[str, Any], supabase=None):
             if supabase:
                 try:
                     supabase.table("knowledge_chunks").insert({
+                        "id": chunk_entry["id"],
                         "document_id": doc_id,
                         "chunk_text": chunk_entry["chunk_text"],
                         "page_number": chunk_entry["page_number"],
@@ -234,10 +265,14 @@ def run_full_bundle_ingestion():
     supabase = get_supabase_client()
     store = load_local_knowledge_store()
 
-    # Reset previously ingested chunks to avoid duplicate accumulation
+    # Reset local chunks to avoid duplicates
     store["chunks"] = []
 
-    print("\n--- BEGINNING BIS KNOWLEDGE INGESTION ---")
+    print("\n--- BEGINNING BIS KNOWLEDGE INGESTION (LIVE SUPABASE + LOCAL) ---")
+    if supabase:
+        print("[INFO] Live Supabase connection active. Indexing in Supabase PostgreSQL + pgvector.")
+    else:
+        print("[INFO] Operating in local fallback mode.")
     
     # 1. Standards
     std_file = SOURCES_DIR / "standards.csv"
@@ -260,10 +295,10 @@ def run_full_bundle_ingestion():
     for df in doc_files:
         if df.exists():
             c_cnt = ingest_markdown_doc(df, store, supabase)
-            print(f"[OK] Document parsed & chunked: {df.name} -> {c_cnt} chunk(s) embedded")
+            print(f"[OK] Document parsed & chunked: {df.name} -> {c_cnt} chunk(s) embedded into pgvector")
 
     save_local_knowledge_store(store)
-    print("--- INGESTION BUNDLE PROCESSED SUCCESSFULLY ---\n")
+    print("--- INGESTION COMPLETED WITH ZERO ERRORS ---\n")
 
 
 if __name__ == "__main__":

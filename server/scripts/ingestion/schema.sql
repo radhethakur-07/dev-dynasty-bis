@@ -19,7 +19,6 @@ CREATE TABLE IF NOT EXISTS standards_metadata (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Index on standard code and category
 CREATE INDEX IF NOT EXISTS idx_standards_code ON standards_metadata(code);
 CREATE INDEX IF NOT EXISTS idx_standards_category ON standards_metadata(category);
 
@@ -35,8 +34,7 @@ CREATE TABLE IF NOT EXISTS knowledge_documents (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. Knowledge Chunks with Vector Embeddings
--- Note: Replace 768 with the dimension matching your chosen embedding model if different
+-- 4. Knowledge Chunks with Vector Embeddings (768 dimensions)
 CREATE TABLE IF NOT EXISTS knowledge_chunks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     document_id UUID REFERENCES knowledge_documents(id) ON DELETE CASCADE,
@@ -102,7 +100,7 @@ CREATE TABLE IF NOT EXISTS feedback (
 -- 8. Cosine Similarity Vector Matching Function
 CREATE OR REPLACE FUNCTION match_knowledge_chunks (
     query_embedding vector(768),
-    match_threshold float DEFAULT 0.65,
+    match_threshold float DEFAULT 0.40,
     match_count int DEFAULT 5,
     filter_demo boolean DEFAULT NULL
 )
@@ -130,7 +128,7 @@ BEGIN
         kc.page_number,
         kc.section,
         kc.is_demo,
-        1 - (kc.embedding <=> query_embedding) AS similarity
+        (1 - (kc.embedding <=> query_embedding))::float AS similarity
     FROM knowledge_chunks kc
     JOIN knowledge_documents kd ON kc.document_id = kd.id
     WHERE (filter_demo IS NULL OR kc.is_demo = filter_demo)
