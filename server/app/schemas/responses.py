@@ -72,21 +72,11 @@ class SchemeInformationResponse(BaseModel):
 class HallmarkingResponse(BaseModel):
     type: Literal["hallmarking_info"] = "hallmarking_info"
     summary: str
-    precious_metal: str = Field(default="Gold & Silver")
-    mandatory_marks: List[str] = Field(
-        default_factory=lambda: [
-            "1. BIS Logo (Standard Triangle Hallmark)",
-            "2. Purity & Fineness (e.g., 22K916, 18K750, 14K585)",
-            "3. 6-digit Alphanumeric HUID (Hallmark Unique Identification)"
-        ]
-    )
-    purity_grades: List[str] = Field(
-        default_factory=lambda: [
-            "24K (999)", "23K (958)", "22K (916)", "20K (833)", "18K (750)", "14K (585)"
-        ]
-    )
-    consumer_verification_steps: List[str]
-    sources: List[SourceCitation]
+    precious_metal: str = Field(default="Gold")
+    mandatory_marks: List[str] = Field(default_factory=list)
+    purity_grades: Optional[List[str]] = None
+    consumer_verification_steps: List[str] = Field(default_factory=list)
+    sources: List[SourceCitation] = Field(default_factory=list)
     disclaimer: str = "Hallmarking guidelines are based on official BIS regulations. Verify authenticity using the BIS CARE mobile app."
     is_demo: bool = False
     demo_badge: Optional[str] = "Demo / Sample / Not official"

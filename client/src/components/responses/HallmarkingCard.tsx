@@ -46,6 +46,15 @@ export const HallmarkingCard: React.FC<HallmarkingCardProps> = ({ data }) => {
         </div>
       )}
 
+      {(!data.mandatory_marks || data.mandatory_marks.length === 0) && (
+        <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/50 flex items-center gap-3 text-xs text-slate-300">
+          <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0" />
+          <span>
+            No official mandatory marks table is currently ingested for <strong className="text-slate-100">{data.precious_metal || "this material"}</strong>.
+          </span>
+        </div>
+      )}
+
       {/* Recognized Purity Grades */}
       {data.purity_grades && data.purity_grades.length > 0 && (
         <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/40">
