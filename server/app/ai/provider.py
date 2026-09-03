@@ -1,4 +1,4 @@
-﻿import re
+import re
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 from app.core.config import settings
@@ -73,7 +73,13 @@ def classify_query_intent(prompt: str, language: str = "en") -> IntentClassifica
         )
 
     # 4. Schemes Information
-    if any(k in lower_query for k in ["scheme i", "scheme-i", "scheme ii", "scheme-ii", "crs scheme", "fmcs scheme", "योजना"]):
+    if any(k in lower_query for k in [
+        "scheme i", "scheme-i", "scheme 1",
+        "scheme ii", "scheme-ii", "scheme 2",
+        "scheme iv", "scheme-iv", "scheme 4",
+        "scheme x", "scheme-x", "scheme 10",
+        "crs scheme", "fmcs scheme", "coc scheme", "योजना"
+    ]):
         return IntentClassification(
             intent=IntentType.SCHEME_INFORMATION,
             query=prompt,

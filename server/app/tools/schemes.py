@@ -1,9 +1,10 @@
-﻿from app.schemas.tools import SchemeInformationInput
-from app.schemas.responses import SchemeInformationResponse
+from typing import Union
+from app.schemas.tools import SchemeInformationInput
+from app.schemas.responses import SchemeInformationResponse, InsufficientEvidenceResponse
 from app.services.scheme_service import scheme_service
 
 
-def get_scheme_information(args: SchemeInformationInput) -> SchemeInformationResponse:
+def get_scheme_information(args: SchemeInformationInput) -> Union[SchemeInformationResponse, InsufficientEvidenceResponse]:
     """
     Retrieve structural information regarding BIS conformity schemes (e.g. ISI Mark, CRS, FMCS).
     """

@@ -1,4 +1,4 @@
-﻿from typing import Optional
+from typing import Optional
 from app.repositories.laboratory_repo import laboratory_repo
 from app.schemas.responses import LaboratoryResultsResponse, LaboratoryItem, SourceCitation
 from app.core.config import settings
@@ -45,12 +45,20 @@ class LaboratoryService:
 
         has_demo = any(l.is_demo for l in labs)
 
-        if language == "hi":
-            summary = f"उत्पाद/परीक्षण '{product_or_test}' के लिए प्रयोगशाला रिकॉर्ड प्राप्त हुए।"
-            disclaimer = "परीक्षण क्षमताओं और मान्यता स्थिति की पुष्टि आधिकारिक बीआईएस प्रयोगशाला निर्देशिका से की जानी चाहिए।"
+        if not labs:
+            if language == "hi":
+                summary = f"निर्दिष्ट मानदंड '{product_or_test}'" + (f" ({location} में)" if location else "") + " के लिए कोई मान्यता प्राप्त बीआईएस परीक्षण प्रयोगशाला नहीं मिली।"
+                disclaimer = "सर्च में कोई प्रयोगशाला नहीं मिली। कृपया आधिकारिक बीआईएस लिम्स पोर्टल (lims.bis.gov.in) पर पूर्ण राष्ट्रीय निर्देशिका देखें।"
+            else:
+                summary = f"No recognized BIS testing laboratories found matching the specified scope '{product_or_test}'" + (f" in '{location}'." if location else ".")
+                disclaimer = "No recognized laboratories matched this query. Complete test scopes and facility listings must be verified directly on the official BIS LIMS portal (lims.bis.gov.in)."
         else:
-            summary = f"Testing laboratories matching criteria '{product_or_test}'" + (f" in '{location}'." if location else ".")
-            disclaimer = "Laboratory recognition and testing capabilities should be verified via the official BIS laboratory directory."
+            if language == "hi":
+                summary = f"उत्पाद/परीक्षण '{product_or_test}' के लिए {len(labs)} प्रयोगशाला रिकॉर्ड प्राप्त हुए।"
+                disclaimer = "परीक्षण क्षमताओं और मान्यता स्थिति की पुष्टि आधिकारिक बीआईएस प्रयोगशाला निर्देशिका से की जानी चाहिए।"
+            else:
+                summary = f"Found {len(labs)} recognized BIS testing laboratories matching criteria '{product_or_test}'" + (f" in '{location}'." if location else ".")
+                disclaimer = "Laboratory recognition and testing capabilities should be verified via the official BIS laboratory directory."
 
         return LaboratoryResultsResponse(
             summary=summary,
