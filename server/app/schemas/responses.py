@@ -49,10 +49,15 @@ class CertificationGuidanceResponse(BaseModel):
     product: str
     scheme_name: str
     summary: str
-    steps: List[CertificationStepItem]
-    required_documents: List[str] = Field(default_factory=list)
-    sources: List[SourceCitation]
-    disclaimer: str = "This is procedural guidance based on available documentation. Compliance criteria and fees must be confirmed directly with BIS."
+    applicability: Optional[str] = None
+    applicable_products_or_standards: Optional[List[str]] = None
+    steps: List[CertificationStepItem] = Field(default_factory=list)
+    required_documents: Optional[List[str]] = None
+    testing_and_assessment: Optional[str] = None
+    important_notes: Optional[List[str]] = None
+    sources: List[SourceCitation] = Field(default_factory=list)
+    retrieval_summary: Optional[str] = None
+    disclaimer: str = "This is procedural guidance based on official BIS documentation. Compliance criteria and statutory fees must be confirmed directly with BIS."
     is_demo: bool = False
     demo_badge: Optional[str] = "Demo / Sample / Not official"
 

@@ -54,9 +54,14 @@ export interface CertificationGuidanceResponse {
   product: string;
   scheme_name: string;
   summary: string;
+  applicability?: string | null;
+  applicable_products_or_standards?: string[] | null;
   steps: CertificationStepItem[];
-  required_documents: string[];
+  required_documents?: string[] | null;
+  testing_and_assessment?: string | null;
+  important_notes?: string[] | null;
   sources: SourceCitation[];
+  retrieval_summary?: string | null;
   disclaimer: string;
   is_demo: boolean;
   demo_badge?: string | null;
