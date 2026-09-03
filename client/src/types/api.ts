@@ -77,9 +77,9 @@ export interface SchemeInformationResponse {
 export interface HallmarkingResponse {
   type: "hallmarking_info";
   summary: string;
-  precious_metal: string;
+  precious_metal?: string;
   mandatory_marks: string[];
-  purity_grades: string[];
+  purity_grades?: string[];
   consumer_verification_steps: string[];
   sources: SourceCitation[];
   disclaimer: string;

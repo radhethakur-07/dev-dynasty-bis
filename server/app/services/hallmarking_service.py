@@ -1,4 +1,4 @@
-﻿import json
+import json
 from pathlib import Path
 from app.schemas.responses import HallmarkingResponse, SourceCitation
 from app.core.config import settings
@@ -73,6 +73,8 @@ class HallmarkingService:
 
         return HallmarkingResponse(
             summary=summary,
+            precious_metal="Gold & Silver",
+            purity_grades=["24K (999)", "23K (958)", "22K (916)", "20K (833)", "18K (750)", "14K (585)"],
             consumer_verification_steps=verification_steps,
             sources=citations,
             disclaimer=disclaimer,

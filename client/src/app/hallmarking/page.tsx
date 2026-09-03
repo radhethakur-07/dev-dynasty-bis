@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useCallback } from "react";
 import { searchHallmarking } from "@/lib/api";
@@ -90,6 +90,17 @@ export default function HallmarkingPage() {
       {error && (
         <div className="p-4 rounded-xl border border-red-500/30 bg-red-950/20 text-xs text-red-300">
           {error}
+        </div>
+      )}
+
+      {isLoading && !hallmarkData && (
+        <div className="p-8 rounded-2xl border border-slate-800 bg-slate-900/40 text-center space-y-3 animate-pulse">
+          <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-amber-500/10 text-amber-400">
+            <Loader2 className="w-5 h-5 animate-spin" />
+          </div>
+          <h3 className="text-sm font-semibold text-slate-200">
+            Loading official BIS hallmarking and HUID guidelines...
+          </h3>
         </div>
       )}
 
