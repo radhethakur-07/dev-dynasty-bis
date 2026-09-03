@@ -1,4 +1,4 @@
-import json
+﻿import json
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
@@ -14,7 +14,7 @@ STOPWORDS: Set[str] = {
     "requirements", "specification", "specifications", "please", "tell", "me", "which",
     "give", "code", "number", "product", "products", "find", "search", "show", "can", "you",
     "about", "how", "details", "info", "information", "does", "do", "any", "related", "like",
-    "under", "मानक", "है", "क्या", "के", "लिए", "बताओ", "लागू", "होने", "वाले"
+    "under", "मानक", "है", "क्या", "के", "लिए", "बताओ", "लागू", "होने", "वाले", "बारे", "में"
 }
 
 MIN_RELEVANCE_SCORE = 0.60
@@ -35,52 +35,88 @@ class StandardsRepository:
                 tokens.append(normalized)
         return tokens
 
-    def _compute_relevance(self, std: Dict[str, Any], query: str, product_tokens: List[str]) -> float:
+    def _compute_relevance(
+        self,
+        std: Dict[str, Any],
+        query: str,
+        product_tokens: List[str],
+        category: Optional[str] = None,
+        material: Optional[str] = None,
+        intended_use: Optional[str] = None
+    ) -> float:
         title = std.get("title", "").lower()
         code = std.get("code", "").lower()
         reason = std.get("reason", "").lower()
-        category = std.get("category", "").lower()
+        std_category = std.get("category", "").lower()
         lower_query = query.lower()
 
         # 1. Direct standard code match (e.g. "IS 2347" in query)
         if code in lower_query or code.replace(" ", "") in lower_query.replace(" ", ""):
             return 1.0
 
+        # Cross-category contradiction penalty: if category is specified and directly contradicts
+        if category and std_category:
+            cat_lower = category.lower()
+            if ("food" in cat_lower and ("toy" in std_category or "electric" in std_category)) or \
+               ("toy" in cat_lower and ("food" in std_category or "electric" in std_category)) or \
+               ("electric" in cat_lower and "food" in std_category):
+                return 0.0
+
         # 2. Check exact multi-word phrase match in title (e.g. "pressure cooker" in title)
+        base_score = 0.0
         if len(product_tokens) >= 2:
             exact_phrase = " ".join(product_tokens)
             if exact_phrase in title:
-                return 0.95
+                base_score = 0.95
 
-        # 3. Token match ratio
-        if not product_tokens:
+        # 3. Token match ratio if not an exact phrase
+        if base_score == 0.0 and product_tokens:
+            matched_tokens = 0
+            for t in product_tokens:
+                if t in title or (t in reason and len(t) > 3) or (t in std_category and len(t) > 3):
+                    matched_tokens += 1
+
+            ratio = matched_tokens / len(product_tokens)
+            if ratio >= 0.75:
+                base_score = 0.85
+            elif ratio >= 0.50:
+                base_score = 0.65
+            elif ratio > 0:
+                base_score = 0.30
+
+        if base_score == 0.0:
             return 0.0
 
-        matched_tokens = 0
-        for t in product_tokens:
-            if t in title or (t in reason and len(t) > 3) or (t in category and len(t) > 3):
-                matched_tokens += 1
+        # Contextual boosts for material, intended use, and category alignment
+        boost = 0.0
+        if category and category.lower() in std_category:
+            boost += 0.05
+        if material and (material.lower() in title or material.lower() in reason):
+            boost += 0.05
+        if intended_use and (intended_use.lower() in title or intended_use.lower() in reason):
+            boost += 0.05
 
-        ratio = matched_tokens / len(product_tokens)
-        if ratio >= 0.75:
-            return 0.85
-        elif ratio >= 0.50:
-            return 0.65
-        elif ratio > 0:
-            return 0.30
-        return 0.0
+        return min(1.0, base_score + boost)
 
-    def search_standards(self, query: str, product: Optional[str] = None) -> List[Dict[str, Any]]:
-        search_phrase = f"{product or ''} {query}".strip()
-        product_tokens = self._extract_product_tokens(search_phrase)
+    def search_standards(
+        self,
+        query: str,
+        product: Optional[str] = None,
+        category: Optional[str] = None,
+        material: Optional[str] = None,
+        intended_use: Optional[str] = None,
+        description: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        # Consolidate rich product search context
+        search_phrase = f"{product or ''} {category or ''} {material or ''} {intended_use or ''} {description or ''} {query}".strip()
+        product_tokens = self._extract_product_tokens(f"{product or ''} {query}")
 
         candidates: List[Dict[str, Any]] = []
 
         # 1. Fetch candidates from live Supabase if available
         if self.supabase:
             try:
-                # Broad fetch from Supabase to filter locally by strict relevance
-                response = self.supabase.table("standards_metadata").select("*").limit(20).execute()
+                response = self.supabase.table("standards_metadata").select("*").limit(25).execute()
                 if response.data:
                     candidates = response.data
             except Exception as exc:
@@ -95,7 +131,7 @@ class StandardsRepository:
             except Exception as e:
                 logger.warning(f"Error reading local knowledge store: {e}")
 
-        # 3. Fallback to sample demo standards only if no candidates exist
+        # 3. Fallback to sample demo standards only if no candidate store exists
         if not candidates:
             candidates = DEMO_STANDARDS
 
@@ -104,7 +140,14 @@ class StandardsRepository:
         filtered_out_count = 0
 
         for std in candidates:
-            score = self._compute_relevance(std, search_phrase, product_tokens)
+            score = self._compute_relevance(
+                std=std,
+                query=search_phrase,
+                product_tokens=product_tokens,
+                category=category,
+                material=material,
+                intended_use=intended_use
+            )
             if score >= MIN_RELEVANCE_SCORE:
                 scored_std = dict(std)
                 scored_std["relevance_score"] = score
@@ -117,8 +160,9 @@ class StandardsRepository:
 
         passed_summary = [f"{c.get('code')}: {c.get('relevance_score', 0.0):.2f}" for c in scored_candidates]
         logger.info(
-            f"[DIAGNOSTIC RETRIEVAL] Query: '{query}' | "
-            f"Extracted Product Tokens: {product_tokens} | "
+            f"[DIAGNOSTIC RETRIEVAL] Product: '{product}' | Query: '{query}' | "
+            f"Attributes: cat={category}, mat={material}, use={intended_use} | "
+            f"Product Tokens: {product_tokens} | "
             f"Candidates Evaluated: {total_evaluated} | "
             f"Passed Threshold (>={MIN_RELEVANCE_SCORE}): {len(scored_candidates)} | "
             f"Filtered-Out Irrelevant Count: {filtered_out_count} | "

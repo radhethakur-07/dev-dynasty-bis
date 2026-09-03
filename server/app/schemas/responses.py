@@ -31,6 +31,7 @@ class StandardRecommendationResponse(BaseModel):
         "This recommendation identifies Potentially Relevant Standards based on available BIS records. "
         "Final applicability and mandatory status should be verified through official Quality Control Orders (QCOs) on manakonline.in."
     )
+    clarification_prompt: Optional[str] = None
     is_demo: bool = False
     demo_badge: Optional[str] = "Demo / Sample / Not official"
 

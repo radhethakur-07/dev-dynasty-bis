@@ -1,10 +1,14 @@
-﻿from typing import Any, Dict, Literal, Optional
+from typing import Any, Dict, Literal, Optional
 from pydantic import BaseModel, Field
 
 
 class StandardSearchInput(BaseModel):
     product: str = Field(..., min_length=2, max_length=200, description="Product name or keywords")
-    query: str = Field(..., min_length=2, max_length=500, description="User question or context")
+    query: Optional[str] = Field(default=None, max_length=500, description="User question or additional context")
+    category: Optional[str] = Field(default=None, max_length=100, description="Product category or sector")
+    material: Optional[str] = Field(default=None, max_length=100, description="Material composition (e.g., aluminium, stainless steel, plastic)")
+    intended_use: Optional[str] = Field(default=None, max_length=200, description="Intended application or user group")
+    description: Optional[str] = Field(default=None, max_length=500, description="Detailed product description or specifications")
     language: Literal["en", "hi"] = Field(default="en", description="Language preference")
 
 

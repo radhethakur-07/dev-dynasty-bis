@@ -1,4 +1,4 @@
-﻿from fastapi import APIRouter
+from fastapi import APIRouter
 from app.schemas.tools import StandardSearchInput
 from app.schemas.responses import StandardRecommendationResponse
 from app.services.standards_service import standards_service
@@ -14,6 +14,10 @@ async def search_standards_endpoint(payload: StandardSearchInput) -> StandardRec
     """
     return standards_service.find_standards(
         product=payload.product,
-        query=payload.query,
+        query=payload.query or payload.product,
+        category=payload.category,
+        material=payload.material,
+        intended_use=payload.intended_use,
+        description=payload.description,
         language=payload.language
     )

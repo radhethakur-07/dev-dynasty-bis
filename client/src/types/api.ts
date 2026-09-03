@@ -26,8 +26,19 @@ export interface StandardRecommendationResponse {
   standards: StandardItem[];
   sources: SourceCitation[];
   disclaimer: string;
+  clarification_prompt?: string | null;
   is_demo: boolean;
   demo_badge?: string | null;
+}
+
+export interface StandardSearchParams {
+  product: string;
+  category?: string;
+  material?: string;
+  intended_use?: string;
+  description?: string;
+  query?: string;
+  language?: Language;
 }
 
 export interface CertificationStepItem {

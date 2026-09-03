@@ -23,8 +23,25 @@ export const StandardCard: React.FC<StandardCardProps> = ({ data }) => {
         </div>
       )}
 
+      {/* Empty / Insufficient Evidence State */}
+      {data.standards.length === 0 && (
+        <div className="p-5 rounded-xl border border-slate-800 bg-slate-900/40 space-y-3">
+          <div className="flex items-center gap-2.5 text-amber-400 text-sm font-semibold">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>No Verified Standards Met Relevance Threshold</span>
+          </div>
+          {data.clarification_prompt && (
+            <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800 text-xs text-slate-300 leading-relaxed">
+              <strong className="text-blue-400">Guidance: </strong>
+              {data.clarification_prompt}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Standard List */}
-      <div className="grid grid-cols-1 gap-3">
+      {data.standards.length > 0 && (
+        <div className="grid grid-cols-1 gap-3">
         {data.standards.map((std, idx) => (
           <div
             key={idx}
@@ -61,6 +78,7 @@ export const StandardCard: React.FC<StandardCardProps> = ({ data }) => {
           </div>
         ))}
       </div>
+      )}
 
       {/* Official Disclaimer */}
       {data.disclaimer && (

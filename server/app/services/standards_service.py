@@ -9,8 +9,25 @@ from app.core.config import settings
 
 
 class StandardsService:
-    def find_standards(self, product: str, query: str, language: str = "en") -> StandardRecommendationResponse:
-        records = standards_repo.search_standards(query=query, product=product)
+    def find_standards(
+        self,
+        product: str,
+        query: Optional[str] = None,
+        category: Optional[str] = None,
+        material: Optional[str] = None,
+        intended_use: Optional[str] = None,
+        description: Optional[str] = None,
+        language: str = "en"
+    ) -> StandardRecommendationResponse:
+        effective_query = query or product
+        records = standards_repo.search_standards(
+            query=effective_query,
+            product=product,
+            category=category,
+            material=material,
+            intended_use=intended_use,
+            description=description
+        )
 
         standards_items = []
         citations = []
@@ -49,23 +66,32 @@ class StandardsService:
 
         if not standards_items:
             if language == "hi":
-                summary = f"उत्पाद '{product}' के लिए वर्तमान सत्यापित ज्ञान आधार में कोई प्रासंगिक मानक नहीं मिला।"
-                disclaimer = "सटीक उत्पाद शीर्षक की जांच करें या manakonline.in पर आधिकारिक बीआईएस ई-बिक्री पोर्टल देखें।"
+                summary = f"उत्पाद '{product}' के लिए वर्तमान सत्यापित बीआईएस ज्ञान आधार में कोई मानक प्रासंगिकता सीमा पार नहीं कर सका।"
+                disclaimer = (
+                    "वर्तमान ज्ञान आधार में इस उत्पाद के लिए कोई सत्यापित मानक दर्ज नहीं है। "
+                    "कृपया उत्पाद का नाम स्पष्ट करें या manakonline.in पर आधिकारिक बीआईएस ई-बिक्री पोर्टल देखें।"
+                )
+                clarification = "सुझाव: उत्पाद का आधिकारिक नाम (जैसे 'कुकवेयर' या 'घरेलू उपकरण') दर्ज करें अथवा सामग्री व उपयोग की जानकारी जोड़ें।"
             else:
-                summary = f"No Indian Standard meeting the relevance threshold was found for '{product}' in the verified knowledge base."
-                disclaimer = "Please verify the specific product name or consult official BIS Quality Control Orders (QCOs) on manakonline.in."
+                summary = f"No Indian Standard in the verified knowledge base matched the criteria for '{product}' above the required relevance threshold."
+                disclaimer = (
+                    "No authoritative Indian Standard record was established for this query in the ingested repository. "
+                    "Do not infer voluntary or mandatory compliance status without verifying official Quality Control Orders (QCOs) on manakonline.in."
+                )
+                clarification = "Suggestion: Try refining the product name, selecting a standardized category, or providing material specifications (e.g., 'aluminium', 'stainless steel')."
             
             return StandardRecommendationResponse(
                 summary=summary,
                 standards=[],
                 sources=[],
                 disclaimer=disclaimer,
+                clarification_prompt=clarification,
                 is_demo=False,
                 demo_badge=None
             )
 
         if language == "hi":
-            summary = f"उत्पाद '{product}' के लिए संभावित रूप से प्रासंगिक मानक (Potentially Relevant Standards):"
+            summary = f"उत्पाद '{product}' के लिए संभावित रूप से प्रासंगिक भारतीय मानक (Potentially Relevant Standards):"
             disclaimer = (
                 "यह एआई-सहायता प्राप्त मार्गदर्शन संभावित रूप से प्रासंगिक मानकों की पहचान करता है। "
                 "अंतिम विनियामक अनिवार्यता की पुष्टि manakonline.in पर आधिकारिक गुणवत्ता नियंत्रण आदेशों (QCOs) से की जानी चाहिए।"
