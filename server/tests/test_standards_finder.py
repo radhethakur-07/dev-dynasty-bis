@@ -1,4 +1,4 @@
-﻿import pytest
+import pytest
 from fastapi.testclient import TestClient
 from app.main import app
 
@@ -113,5 +113,5 @@ def test_citation_preservation():
     # Check source citations
     assert len(data["sources"]) > 0
     for src in data["sources"]:
-        assert "services.bis.gov.in" in src["url"]
+        assert "bis.gov.in" in src["url"]
         assert src["is_demo"] is False

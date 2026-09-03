@@ -1,5 +1,5 @@
-﻿"""
-BIS Knowledge Ingestion Pipeline.
+"""
+BIS Knowledge Ingestion Pipeline — Production Maximum Pack.
 
 Parses, cleans, chunks, and indexes authentic BIS source material from server/data/sources/
 into the verified knowledge store (server/data/knowledge_store.json) and Supabase PostgreSQL + pgvector.
@@ -13,7 +13,10 @@ import json
 import os
 import re
 import uuid
+import sys
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 from app.core.config import settings
@@ -107,6 +110,56 @@ def ingest_standards_csv(filepath: Path, store: Dict[str, Any], supabase=None):
         return count
 
 
+def ingest_compulsory_products_csv(filepath: Path, store: Dict[str, Any], supabase=None):
+    with open(filepath, "r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        count = 0
+        for row in reader:
+            code = row.get("standard_code")
+            if not code:
+                continue
+            code = code.strip()
+            prod_name = row.get("product_name", "").strip()
+            scheme = row.get("scheme", "Scheme I").strip()
+            qco = row.get("qco_order", "").strip()
+            reg_status = row.get("regulatory_status", "Compulsory").strip()
+            src_url = row.get("source_url", "https://www.bis.gov.in/").strip()
+
+            existing = [s for s in store["standards"] if s["code"] == code]
+            if existing:
+                existing[0]["reason"] = f"{existing[0].get('reason', '')} | Compulsory under {qco} ({scheme})"
+                count += 1
+            else:
+                entry = {
+                    "code": code,
+                    "title": prod_name,
+                    "category": f"{scheme} | {reg_status}",
+                    "status": "Active",
+                    "reason": f"Compulsory Product under {qco}. Applicable Scheme: {scheme}",
+                    "source_url": src_url,
+                    "source_status": "Official BIS source",
+                    "is_demo": False,
+                    "ingested_at": datetime.utcnow().isoformat()
+                }
+                store["standards"].append(entry)
+                count += 1
+                if supabase:
+                    try:
+                        supabase.table("standards_metadata").upsert({
+                            "code": entry["code"],
+                            "title": entry["title"],
+                            "category": entry["category"],
+                            "status": entry["status"],
+                            "source_url": entry["source_url"],
+                            "is_demo": False
+                        }, on_conflict="code").execute()
+                    except Exception as e:
+                        logger.warning(f"Error inserting compulsory standard {entry['code']}: {e}")
+
+        logger.info(f"Ingested/Enriched {count} compulsory product records from {filepath.name}")
+        return count
+
+
 def ingest_laboratories_csv(filepath: Path, store: Dict[str, Any], supabase=None):
     with open(filepath, "r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -117,11 +170,14 @@ def ingest_laboratories_csv(filepath: Path, store: Dict[str, Any], supabase=None
                 continue
             loc = row.get("location", "").strip()
             state = None
-            if " " in loc and any(s in loc for s in ["Pradesh", "Telangana", "Delhi"]):
+            if " " in loc and any(s in loc for s in ["Pradesh", "Telangana", "Delhi", "Karnataka"]):
                 parts = loc.rsplit(" ", 1)
                 state = parts[1]
             else:
                 state = loc
+
+            scope_disclaimer = "Scope of testing as submitted by the laboratory and recognized under BIS LIMS."
+            scope = f"Validity: {row.get('validity_date', 'Active')} (Lab Code: {row.get('lab_code', 'N/A')}). {scope_disclaimer}"
 
             entry = {
                 "name": name.strip(),
@@ -129,7 +185,7 @@ def ingest_laboratories_csv(filepath: Path, store: Dict[str, Any], supabase=None
                 "state": state or loc,
                 "lab_code": row.get("lab_code", "").strip(),
                 "validity_date": row.get("validity_date", "").strip(),
-                "scope_of_testing": f"Validity: {row.get('validity_date', 'Active')} (Lab Code: {row.get('lab_code', 'N/A')})",
+                "scope_of_testing": scope,
                 "recognition_status": "BIS LIMS Recognized",
                 "source_url": row.get("source_url", "https://lims.bis.gov.in/home/labs/").strip(),
                 "source_status": row.get("source_status", "Official BIS LIMS").strip(),
@@ -142,7 +198,6 @@ def ingest_laboratories_csv(filepath: Path, store: Dict[str, Any], supabase=None
 
             if supabase:
                 try:
-                    # Check if already exists by name
                     check = supabase.table("laboratories").select("id").eq("name", entry["name"]).execute()
                     if check.data:
                         supabase.table("laboratories").update({
@@ -180,11 +235,9 @@ def ingest_markdown_doc(filepath: Path, store: Dict[str, Any], supabase=None):
     doc_id = str(uuid.uuid4())
     if supabase:
         try:
-            # Check existing doc by title to preserve stable ID
             existing = supabase.table("knowledge_documents").select("id").eq("title", doc_title).execute()
             if existing.data:
                 doc_id = existing.data[0]["id"]
-                # Clear previous chunks for this doc in Supabase
                 supabase.table("knowledge_chunks").delete().eq("document_id", doc_id).execute()
             else:
                 supabase.table("knowledge_documents").insert({
@@ -215,7 +268,7 @@ def ingest_markdown_doc(filepath: Path, store: Dict[str, Any], supabase=None):
         lines = sec.strip().splitlines()
         sec_title = lines[0].replace("#", "").strip() if lines else "General"
         sec_body = "\n".join(lines[1:]) if len(lines) > 1 else lines[0]
-        
+
         sec_url_match = re.search(r"https?://[^\s\)]+", sec_body)
         sec_url = sec_url_match.group(0) if sec_url_match else doc_url
 
@@ -265,40 +318,58 @@ def run_full_bundle_ingestion():
     supabase = get_supabase_client()
     store = load_local_knowledge_store()
 
-    # Reset local chunks to avoid duplicates
+    # Reset local chunks to reload fresh verified set
     store["chunks"] = []
 
-    print("\n--- BEGINNING BIS KNOWLEDGE INGESTION (LIVE SUPABASE + LOCAL) ---")
+    print("\n--- BEGINNING PRODUCTION BIS KNOWLEDGE INGESTION (LIVE SUPABASE + LOCAL) ---")
     if supabase:
         print("[INFO] Live Supabase connection active. Indexing in Supabase PostgreSQL + pgvector.")
     else:
         print("[INFO] Operating in local fallback mode.")
-    
+
     # 1. Standards
     std_file = SOURCES_DIR / "standards.csv"
     if std_file.exists():
         std_count = ingest_standards_csv(std_file, store, supabase)
-        print(f"[OK] Standards parsed & ingested: {std_count} records from {std_file.name}")
+        print(f"[OK] Published Standards parsed & ingested: {std_count} records from {std_file.name}")
+
+    # Compulsory products
+    comp_file = SOURCES_DIR / "compulsory_products.csv"
+    if comp_file.exists():
+        comp_count = ingest_compulsory_products_csv(comp_file, store, supabase)
+        print(f"[OK] Compulsory Products & QCO mappings parsed & ingested: {comp_count} records from {comp_file.name}")
 
     # 2. Laboratories
     lab_file = SOURCES_DIR / "laboratories.csv"
     if lab_file.exists():
         lab_count = ingest_laboratories_csv(lab_file, store, supabase)
-        print(f"[OK] Laboratories parsed & ingested: {lab_count} records from {lab_file.name}")
+        print(f"[OK] Recognized Laboratories parsed & ingested: {lab_count} records from {lab_file.name}")
 
-    # 3. Documents (Schemes, Hallmarking, FAQs)
+    # 3. Documents (Schemes, Hallmarking, FAQs, System Cert, FMCS, Scheme II, IV, X)
     doc_files = [
         SOURCES_DIR / "certification_schemes.md",
+        SOURCES_DIR / "certification_faq.md",
         SOURCES_DIR / "hallmarking_guide.md",
-        SOURCES_DIR / "consumer_faqs.md"
+        SOURCES_DIR / "hallmarking_gold_huid.md",
+        SOURCES_DIR / "hallmarking_silver.md",
+        SOURCES_DIR / "consumer_faqs.md",
+        SOURCES_DIR / "bis_care_consumer.md",
+        SOURCES_DIR / "system_certification.md",
+        SOURCES_DIR / "fmcs_faq.md",
+        SOURCES_DIR / "scheme_ii_crs.md",
+        SOURCES_DIR / "scheme_iv_coc.md",
+        SOURCES_DIR / "scheme_x_faq.md"
     ]
+
+    total_doc_chunks = 0
     for df in doc_files:
         if df.exists():
             c_cnt = ingest_markdown_doc(df, store, supabase)
+            total_doc_chunks += c_cnt
             print(f"[OK] Document parsed & chunked: {df.name} -> {c_cnt} chunk(s) embedded into pgvector")
 
     save_local_knowledge_store(store)
-    print("--- INGESTION COMPLETED WITH ZERO ERRORS ---\n")
+    print(f"\n--- INGESTION COMPLETED WITH ZERO ERRORS: {total_doc_chunks} CHUNKS EMBEDDED ---")
 
 
 if __name__ == "__main__":

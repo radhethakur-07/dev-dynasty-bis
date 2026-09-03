@@ -1,0 +1,13 @@
+priority,data_domain,official_source,recommended_local_file,notes
+P0,Published standards / Know Your Standard,https://standards.bis.gov.in/,standards_master.csv,Build product-to-standard retrieval first
+P0,Compulsory products / QCOs,https://www.bis.gov.in/product-certification/products-under-compulsory-certification/?lang=en,compulsory_products.csv,"Scheme, IS number, product, QCO"
+P0,Product certification FAQ/process,https://www.bis.gov.in/product-certification/product-certification-faq/?lang=en,certification_faq.md,Ground application/process questions
+P0,Hallmarking / HUID,https://www.bis.gov.in/hallmarking-overview/hallmarking-faqs/hallmarking-faq/?lang=en,hallmarking_gold_huid.md,Gold + HUID first
+P0,Silver hallmarking,https://www.bis.gov.in/hallmarking-overview/,hallmarking_silver.md,Populate only after verifying current official BIS material
+P0,Recognized laboratories,https://lims.bis.gov.in/home/labs/,laboratories.csv,Keep current validity/status
+P1,BIS Care / consumer verification,https://www.bis.gov.in/bis-apps/?lang=en,bis_care_consumer.md,Verification workflows
+P1,System certification,https://www.bis.gov.in/system-certification-overview/systems-under-certification/?lang=en,system_certification.md,ISO/system certification
+P1,FMCS,https://www.bis.gov.in/fmcs/fmcs-faqs/?lang=en,fmcs_faq.md,Foreign manufacturers
+P1,Scheme II / CRS,https://www.bis.gov.in/product-certification/products-under-compulsory-certification/scheme-ii-registration-scheme/?lang=en,scheme_ii.csv,Electronics/IT product mappings
+P1,Scheme IV,https://www.bis.gov.in/product-certification/products-under-compulsory-certification/scheme-4/?lang=en,scheme_iv.csv,Certificate of Conformity
+P1,Scheme X,https://www.bis.gov.in/scheme-x-certification/faq-scheme-x-certification/?lang=en,scheme_x_faq.md,Scheme X guidance

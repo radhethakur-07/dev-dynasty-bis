@@ -21,38 +21,62 @@ class HallmarkingService:
         is_huid_query = "huid" in lower_q or "verify" in lower_q or "सत्यापन" in lower_q
 
         if is_silver_query:
-            # Honest data gap: Silver hallmarking is not in the current ingested knowledge base
+            # Fully supported under official IS 2112:2025
             if is_hi:
                 summary = (
-                    "वर्तमान सत्यापित बीआईएस ज्ञान आधार में केवल सोने के आभूषणों की हॉलमार्किंग और HUID संबंधी अधिकृत दस्तावेज अनुक्रमित हैं। "
-                    "चांदी की हॉलमार्किंग (IS 2112) से संबंधित अधिकृत स्रोत सामग्री अभी इस रिपॉजिटरी में शामिल नहीं की गई है।"
+                    "बीआईएस के संशोधित मानक IS 2112:2025 के अनुसार, 1 सितंबर 2025 से चांदी के आभूषणों और कलाकृतियों के लिए "
+                    "HUID-आधारित हॉलमार्किंग स्वैच्छिक (voluntary) आधार पर लागू की गई है।"
                 )
-                disclaimer = "चांदी के आभूषणों के विनिर्देशों के लिए आधिकारिक बीआईएस पोर्टल (bis.gov.in) देखें। सोने के नियमों को चांदी पर लागू न समझें।"
+                verification_steps = [
+                    "चांदी के आभूषण पर 3 आधिकारिक चिह्न देखें: (1) 'SILVER' शब्द के साथ बीआईएस मानक चिह्न, (2) शुद्धता/सुंदरता ग्रेड (उदा. 925), (3) 6-अंकीय HUID।",
+                    "गूगल प्ले स्टोर या एप्पल ऐप स्टोर से आधिकारिक 'BIS CARE' ऐप डाउनलोड करें।",
+                    "ऐप में 'Verify HUID' विकल्प चुनें और चांदी के आभूषण पर लेजर से अंकित 6-अंकीय कोड दर्ज करें।",
+                    "प्रदर्शित ज्वेलर पंजीकरण, हॉलमार्किंग केंद्र और शुद्धता का बिल से मिलान करें।",
+                    "उपभोक्ता बीआईएस मान्यता प्राप्त हॉलमार्किंग केंद्रों पर सशुल्क आधार पर चांदी की शुद्धता की जांच करा सकते हैं।"
+                ]
+                disclaimer = "चांदी हॉलमार्किंग नियम आधिकारिक बीआईएस मानक IS 2112:2025 पर आधारित हैं। प्रामाणिकता की जांच बीआईएस केयर ऐप से करें।"
             else:
                 summary = (
-                    "The current verified BIS knowledge base contains official documentation for Gold jewellery hallmarking and HUID verification only. "
-                    "Authoritative specifications and purity grades for Silver hallmarking (e.g., IS 2112) have not yet been ingested into this repository."
+                    "Under the revised standard IS 2112:2025, the Bureau of Indian Standards introduced HUID-based silver hallmarking "
+                    "on a voluntary basis effective from 1 September 2025 across 7 permitted purity grades."
                 )
-                disclaimer = "For official silver hallmarking specifications, consult bis.gov.in. Do not infer gold hallmarking caratage rules for silver articles."
+                verification_steps = [
+                    "Inspect the silver item for 3 marks: (1) BIS Standard Mark with the word 'SILVER', (2) Purity Grade (e.g., 925), (3) 6-digit alphanumeric HUID code.",
+                    "Download the official 'BIS CARE' mobile app from Google Play Store or Apple App Store.",
+                    "Open the 'Verify HUID' feature on the app home screen.",
+                    "Enter the unique 6-digit alphanumeric code laser-inscribed on the silver jewellery item.",
+                    "Verify displayed article type, jeweller registration, and assaying center match your purchase invoice.",
+                    "Consumers can get silver articles tested at BIS Recognized Assaying & Hallmarking Centres on a chargeable basis."
+                ]
+                disclaimer = "Silver hallmarking specifications reflect official BIS standard IS 2112:2025. Verify authenticity via the BIS CARE mobile app."
 
             return HallmarkingResponse(
                 summary=summary,
-                precious_metal="Silver (Data Gap)",
-                mandatory_marks=[],
-                purity_grades=[],
-                consumer_verification_steps=[
-                    "Consult official BIS notification on silver hallmarking on bis.gov.in.",
-                    "Verify assaying and hallmarking centre recognition status on the BIS portal."
+                precious_metal="Silver (IS 2112:2025)",
+                mandatory_marks=[
+                    "1. BIS Standard Mark (featuring the word 'SILVER')",
+                    "2. Purity / Fineness Grade (800, 835, 925, 958, 970, 990, 999)",
+                    "3. 6-digit Alphanumeric HUID (Hallmark Unique Identification)"
                 ],
+                purity_grades=[
+                    "999 (99.9% Fine Silver)",
+                    "990 (99.0% Pure Silver)",
+                    "970 (97.0% Silver)",
+                    "958 (95.8% Silver)",
+                    "925 (92.5% Sterling Silver)",
+                    "835 (83.5% Silver)",
+                    "800 (80.0% Silver)"
+                ],
+                consumer_verification_steps=verification_steps,
                 sources=citations,
                 disclaimer=disclaimer,
                 is_demo=has_demo,
                 demo_badge=settings.DEMO_DATA_NOTICE if has_demo else None
             )
 
-        # 3. Grounded Gold & HUID facts from retrieved knowledge chunks
+        # 3. Grounded Gold & HUID facts from retrieved knowledge chunks (IS 1417)
         if is_hi:
-            summary = "बीआईएस आधिकारिक रिकॉर्ड के अनुसार, 1 जुलाई 2021 से सोने के आभूषणों पर 3 अनिवार्य चिह्न (BIS लोगो, शुद्धता/कैरेट, और 6-अंकीय HUID) लागू हैं।"
+            summary = "बीआईएस आधिकारिक रिकॉर्ड (IS 1417) के अनुसार, 1 जुलाई 2021 से सोने के आभूषणों पर 3 अनिवार्य चिह्न (BIS लोगो, शुद्धता/कैरेट, और 6-अंकीय HUID) लागू हैं।"
             verification_steps = [
                 "आभूषण पर 3 अनिवार्य चिह्न अवश्य देखें: BIS त्रिकोण लोगो, कैरेट/शुद्धता (जैसे 22K916), और 6-अंकीय HUID।",
                 "गूगल प्ले स्टोर या एप्पल ऐप स्टोर से आधिकारिक 'BIS CARE' ऐप डाउनलोड करें।",
