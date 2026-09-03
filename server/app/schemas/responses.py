@@ -17,7 +17,8 @@ class StandardItem(BaseModel):
     reason: str = Field(..., description="Why this standard is relevant")
     label: str = Field(default="Potentially Relevant Standard", description="Classification label")
     confidence: Literal["high", "medium", "low"] = Field(default="high")
-    relevance_score: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Computed relevance score")
+    match_strength: Optional[str] = Field(default="Moderate Match", description="Heuristic match strength indicator (Strong, Moderate, Preliminary)")
+    relevance_score: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Computed heuristic relevance score")
     is_demo: bool = Field(default=False)
     demo_badge: Optional[str] = Field(default="Demo / Sample / Not official")
 

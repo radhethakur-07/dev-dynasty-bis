@@ -1,4 +1,4 @@
-﻿from typing import Optional
+from typing import Optional
 from app.repositories.standards_repo import standards_repo
 from app.schemas.responses import (
     StandardRecommendationResponse,
@@ -36,6 +36,7 @@ class StandardsService:
         for rec in records:
             score = rec.get("relevance_score", 0.8)
             conf = "high" if score >= 0.85 else ("medium" if score >= 0.65 else "low")
+            strength = "Strong Match" if score >= 0.85 else ("Moderate Match" if score >= 0.65 else "Preliminary Match")
             
             standards_items.append(
                 StandardItem(
@@ -44,6 +45,7 @@ class StandardsService:
                     reason=rec.get("reason", f"Identified as potentially applicable to product '{product}'."),
                     label="Potentially Relevant Standard",
                     confidence=conf,
+                    match_strength=strength,
                     relevance_score=score,
                     is_demo=rec.get("is_demo", False),
                     demo_badge=settings.DEMO_DATA_NOTICE if rec.get("is_demo", False) else None

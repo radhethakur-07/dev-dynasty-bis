@@ -58,6 +58,17 @@ export const StandardCard: React.FC<StandardCardProps> = ({ data }) => {
                     <CheckCircle2 className="w-3 h-3" />
                     {std.label || "Potentially Relevant Standard"}
                   </span>
+                  {std.relevance_score !== undefined && std.relevance_score !== null && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-800/80 border border-slate-700 text-slate-300">
+                      <span className="text-slate-400">Match Strength:</span>
+                      <span className="font-semibold text-blue-300">
+                        {std.match_strength || (std.relevance_score >= 0.85 ? "Strong Match" : "Moderate Match")}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        (Score: {std.relevance_score.toFixed(2)})
+                      </span>
+                    </span>
+                  )}
                 </div>
                 <h4 className="mt-2 text-sm font-semibold text-slate-100 group-hover:text-blue-200 transition-colors">
                   {std.title}

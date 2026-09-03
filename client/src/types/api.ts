@@ -15,6 +15,7 @@ export interface StandardItem {
   reason: string;
   label?: string;
   confidence: "high" | "medium" | "low";
+  match_strength?: string;
   relevance_score?: number;
   is_demo: boolean;
   demo_badge?: string | null;

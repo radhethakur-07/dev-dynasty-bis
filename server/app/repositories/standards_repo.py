@@ -23,6 +23,15 @@ MIN_RELEVANCE_SCORE = 0.60
 class StandardsRepository:
     def __init__(self):
         self.supabase = get_supabase_client()
+        self._local_cache: Dict[str, Dict[str, Any]] = {}
+        if KNOWLEDGE_STORE_FILE.exists():
+            try:
+                with open(KNOWLEDGE_STORE_FILE, "r", encoding="utf-8") as f:
+                    store = json.load(f)
+                    for std in store.get("standards", []):
+                        self._local_cache[std.get("code", "")] = std
+            except Exception as e:
+                logger.warning(f"Error loading local knowledge store cache: {e}")
 
     def _extract_product_tokens(self, text: str) -> List[str]:
         cleaned = re.sub(r"[^\w\s]", " ", text.lower())
@@ -30,7 +39,7 @@ class StandardsRepository:
         tokens = []
         for w in raw_words:
             if w not in STOPWORDS and len(w) > 1:
-                # Basic singularization for plural search queries (e.g. cookers -> cooker)
+                # Basic singularization for plural search queries (e.g. cookers -> cooker, toys -> toy)
                 normalized = w[:-1] if w.endswith("s") and len(w) > 3 and not w.endswith("ss") else w
                 tokens.append(normalized)
         return tokens
@@ -50,36 +59,43 @@ class StandardsRepository:
         std_category = std.get("category", "").lower()
         lower_query = query.lower()
 
-        # 1. Direct standard code match (e.g. "IS 2347" in query)
+        # 1. Direct standard code match (e.g. "IS 2347", "9873", "IS 14543")
         if code in lower_query or code.replace(" ", "") in lower_query.replace(" ", ""):
             return 1.0
+        
+        code_digits_match = re.search(r"is\s*(\d+)", code)
+        if code_digits_match:
+            base_num = code_digits_match.group(1)
+            if base_num in lower_query:
+                return 1.0
 
         # Cross-category contradiction penalty: if category is specified and directly contradicts
         if category and std_category:
             cat_lower = category.lower()
-            if ("food" in cat_lower and ("toy" in std_category or "electric" in std_category)) or \
-               ("toy" in cat_lower and ("food" in std_category or "electric" in std_category)) or \
-               ("electric" in cat_lower and "food" in std_category):
+            if ("food" in cat_lower and ("toy" in std_category or "electric" in std_category or "mechanical" in std_category)) or \
+               ("toy" in cat_lower and ("food" in std_category or "electric" in std_category or "mechanical" in std_category)) or \
+               ("electric" in cat_lower and ("food" in std_category or "toy" in std_category)):
                 return 0.0
 
-        # 2. Check exact multi-word phrase match in title (e.g. "pressure cooker" in title)
+        # 2. Check exact multi-word phrase match in title or category
         base_score = 0.0
         if len(product_tokens) >= 2:
             exact_phrase = " ".join(product_tokens)
-            if exact_phrase in title:
+            if exact_phrase in title or exact_phrase in std_category:
                 base_score = 0.95
 
         # 3. Token match ratio if not an exact phrase
         if base_score == 0.0 and product_tokens:
             matched_tokens = 0
             for t in product_tokens:
-                if t in title or (t in reason and len(t) > 3) or (t in std_category and len(t) > 3):
+                # Match token in title, reason/scope, or category
+                if t in title or (reason and t in reason) or (std_category and t in std_category):
                     matched_tokens += 1
 
             ratio = matched_tokens / len(product_tokens)
-            if ratio >= 0.75:
+            if ratio >= 0.70:
                 base_score = 0.85
-            elif ratio >= 0.50:
+            elif ratio >= 0.40:
                 base_score = 0.65
             elif ratio > 0:
                 base_score = 0.30
@@ -91,9 +107,9 @@ class StandardsRepository:
         boost = 0.0
         if category and category.lower() in std_category:
             boost += 0.05
-        if material and (material.lower() in title or material.lower() in reason):
+        if material and ((material.lower() in title) or (reason and material.lower() in reason)):
             boost += 0.05
-        if intended_use and (intended_use.lower() in title or intended_use.lower() in reason):
+        if intended_use and ((intended_use.lower() in title) or (reason and intended_use.lower() in reason)):
             boost += 0.05
 
         return min(1.0, base_score + boost)
@@ -118,18 +134,20 @@ class StandardsRepository:
             try:
                 response = self.supabase.table("standards_metadata").select("*").limit(25).execute()
                 if response.data:
-                    candidates = response.data
+                    # Merge each Supabase record with cached scope_summary/reason
+                    for row in response.data:
+                        code_key = row.get("code", "")
+                        local_match = self._local_cache.get(code_key, {})
+                        merged = dict(row)
+                        if "reason" not in merged or not merged["reason"]:
+                            merged["reason"] = local_match.get("reason", local_match.get("scope_summary", ""))
+                        candidates.append(merged)
             except Exception as exc:
                 logger.warning(f"Error querying Supabase standards: {exc}.")
 
         # 2. Fallback to local verified store if Supabase returned nothing
-        if not candidates and KNOWLEDGE_STORE_FILE.exists():
-            try:
-                with open(KNOWLEDGE_STORE_FILE, "r", encoding="utf-8") as f:
-                    store = json.load(f)
-                    candidates = store.get("standards", [])
-            except Exception as e:
-                logger.warning(f"Error reading local knowledge store: {e}")
+        if not candidates and self._local_cache:
+            candidates = list(self._local_cache.values())
 
         # 3. Fallback to sample demo standards only if no candidate store exists
         if not candidates:
