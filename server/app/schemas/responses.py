@@ -1,4 +1,4 @@
-﻿from typing import List, Literal, Optional, Union
+from typing import List, Literal, Optional, Union
 from pydantic import BaseModel, Field
 
 
@@ -15,7 +15,9 @@ class StandardItem(BaseModel):
     code: str = Field(..., description="Standard code (e.g. IS 2347)")
     title: str = Field(..., description="Title of the standard")
     reason: str = Field(..., description="Why this standard is relevant")
+    label: str = Field(default="Potentially Relevant Standard", description="Classification label")
     confidence: Literal["high", "medium", "low"] = Field(default="high")
+    relevance_score: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Computed relevance score")
     is_demo: bool = Field(default=False)
     demo_badge: Optional[str] = Field(default="Demo / Sample / Not official")
 
@@ -25,7 +27,10 @@ class StandardRecommendationResponse(BaseModel):
     summary: str
     standards: List[StandardItem]
     sources: List[SourceCitation]
-    disclaimer: str = "Standards identified from current knowledge base. Final applicability should be verified through official BIS processes."
+    disclaimer: str = (
+        "This recommendation identifies Potentially Relevant Standards based on available BIS records. "
+        "Final applicability and mandatory status should be verified through official Quality Control Orders (QCOs) on manakonline.in."
+    )
     is_demo: bool = False
     demo_badge: Optional[str] = "Demo / Sample / Not official"
 
@@ -65,27 +70,16 @@ class SchemeInformationResponse(BaseModel):
 class HallmarkingResponse(BaseModel):
     type: Literal["hallmarking_info"] = "hallmarking_info"
     summary: str
-    precious_metal: str = "Gold / Silver"
     mandatory_marks: List[str] = Field(
         default_factory=lambda: [
-            "BIS Standard Mark (Triangle)",
-            "Purity Grade & Fineness (e.g. 22K916)",
-            "6-digit alphanumeric HUID (Hallmark Unique Identification)"
-        ]
-    )
-    purity_grades: List[str] = Field(
-        default_factory=lambda: [
-            "14 Carat (14K585)",
-            "18 Carat (18K750)",
-            "20 Carat (20K833)",
-            "22 Carat (22K916)",
-            "23 Carat (23K958)",
-            "24 Carat (24K995)"
+            "1. BIS Logo (Standard Triangle Hallmark)",
+            "2. Purity & Fineness (e.g., 22K916, 18K750, 14K585)",
+            "3. 6-digit Alphanumeric HUID (Hallmark Unique Identification)"
         ]
     )
     consumer_verification_steps: List[str]
     sources: List[SourceCitation]
-    disclaimer: str = "Hallmarking guidelines reflect official BIS standards. Consumers can verify HUID using the BIS CARE app."
+    disclaimer: str = "Hallmarking guidelines are based on official BIS regulations. Verify authenticity using the BIS CARE mobile app."
     is_demo: bool = False
     demo_badge: Optional[str] = "Demo / Sample / Not official"
 
@@ -105,29 +99,28 @@ class LaboratoryResultsResponse(BaseModel):
     summary: str
     laboratories: List[LaboratoryItem]
     sources: List[SourceCitation]
-    disclaimer: str = "Laboratory recognition and testing capabilities should be verified via the official BIS laboratory directory."
+    disclaimer: str = "Laboratory recognition should be verified directly with the official BIS LIMS laboratory directory."
     is_demo: bool = False
     demo_badge: Optional[str] = "Demo / Sample / Not official"
 
 
-class SourceListResponse(BaseModel):
-    type: Literal["source_list"] = "source_list"
-    summary: str
-    sources: List[SourceCitation]
+class InsufficientEvidenceResponse(BaseModel):
+    type: Literal["insufficient_evidence"] = "insufficient_evidence"
+    message: str
+    clarification_prompt: Optional[str] = None
+    known_scope: List[str] = Field(default_factory=list)
+    sources: List[SourceCitation] = Field(default_factory=list)
+    disclaimer: str = "The assistant does not fabricate answers when verified evidence is absent."
     is_demo: bool = False
     demo_badge: Optional[str] = "Demo / Sample / Not official"
 
 
 class ClarificationRequiredResponse(BaseModel):
     type: Literal["clarification_required"] = "clarification_required"
-    question: str
-    suggested_options: List[str] = Field(default_factory=list)
-
-
-class InsufficientEvidenceResponse(BaseModel):
-    type: Literal["insufficient_evidence"] = "insufficient_evidence"
-    message: str = "I could not find sufficient verified BIS information in the current knowledge base to answer this confidently."
-    recommended_official_action: str = "Please consult the official BIS portal (www.bis.gov.in) or Manakonline (www.manakonline.in) for latest Gazette notifications and standards."
+    message: str
+    suggested_options: List[str]
+    is_demo: bool = False
+    demo_badge: Optional[str] = "Demo / Sample / Not official"
 
 
 class TextResponse(BaseModel):
@@ -141,7 +134,10 @@ class TextResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     type: Literal["error"] = "error"
+    error_code: str = "ERROR"
     message: str
+    is_demo: bool = False
+    demo_badge: Optional[str] = "Demo / Sample / Not official"
 
 
 FinalResponseUnion = Union[
@@ -150,9 +146,8 @@ FinalResponseUnion = Union[
     SchemeInformationResponse,
     HallmarkingResponse,
     LaboratoryResultsResponse,
-    SourceListResponse,
-    ClarificationRequiredResponse,
     InsufficientEvidenceResponse,
+    ClarificationRequiredResponse,
     TextResponse,
     ErrorResponse
 ]

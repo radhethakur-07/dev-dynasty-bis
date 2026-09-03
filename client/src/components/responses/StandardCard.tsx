@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import { StandardRecommendationResponse } from "@/types/api";
 import { CitationPanel } from "./CitationPanel";
 import { CheckCircle2, ShieldCheck, AlertCircle, Bookmark } from "lucide-react";
@@ -37,9 +37,9 @@ export const StandardCard: React.FC<StandardCardProps> = ({ data }) => {
                     <Bookmark className="w-3.5 h-3.5" />
                     {std.code}
                   </span>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-500/10 border border-blue-500/20 text-blue-400">
                     <CheckCircle2 className="w-3 h-3" />
-                    Relevant Standard
+                    {std.label || "Potentially Relevant Standard"}
                   </span>
                 </div>
                 <h4 className="mt-2 text-sm font-semibold text-slate-100 group-hover:text-blue-200 transition-colors">

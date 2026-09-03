@@ -1,4 +1,4 @@
-﻿export type Language = "en" | "hi";
+export type Language = "en" | "hi";
 
 export interface SourceCitation {
   document_title: string;
@@ -13,7 +13,9 @@ export interface StandardItem {
   code: string;
   title: string;
   reason: string;
+  label?: string;
   confidence: "high" | "medium" | "low";
+  relevance_score?: number;
   is_demo: boolean;
   demo_badge?: string | null;
 }

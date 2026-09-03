@@ -1,8 +1,125 @@
-﻿from abc import ABC, abstractmethod
+﻿import re
+from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 from app.core.config import settings
 from app.core.logging import logger
 from app.ai.prompts.system import BIS_SYSTEM_PROMPT
+from app.schemas.intent import IntentClassification, IntentType
+
+
+OUT_OF_SCOPE_KEYWORDS = [
+    # Programming & Tech Non-BIS
+    "python", "javascript", "java", "c++", "c#", "ruby", "golang", "rust", "typescript",
+    "programming", "coding", "programmer", "developer", "write code", "debug code",
+    "script", "algorithm", "data structure", "teach me", "learn to code", "hello world",
+    "sql query", "react", "next.js", "angular", "css", "html", "github", "linux command",
+    # Gaming & Entertainment
+    "minecraft", "roblox", "fortnite", "gta", "play game", "gameplay", "cheat code",
+    "poem", "poetry", "write a story", "lyrics", "song", "movie", "cinema", "actor", "joke",
+    # Cooking & Food Recipes (not appliances)
+    "recipe", "how to cook", "bake cake", "ingredient",
+    # General non-BIS trivia & homework
+    "capital of", "who won", "president of", "solve equation", "derivative", "integral",
+    "weather today", "travel itinerary", "flight ticket"
+]
+
+BIS_CORE_KEYWORDS = [
+    "bis", "indian standard", "is ", "isi mark", "crs", "fmcs", "hallmark", "huid",
+    "manakonline", "conformity assessment", "testing laboratory", "lims", "qco",
+    "quality control order", "carat", "fineness", "bis care", "मानक", "हॉलमार्क",
+    "प्रमाणन", "लाइसेंस", "प्रयोगशाला", "शुद्धता"
+]
+
+
+def classify_query_intent(prompt: str, language: str = "en") -> IntentClassification:
+    """
+    Deterministically and rigorously classifies user query intent.
+    Enforces strict domain boundaries before any tool is ever invoked.
+    """
+    lower_query = prompt.lower().strip()
+
+    has_bis_core = any(k in lower_query for k in BIS_CORE_KEYWORDS)
+    is_standard_code = bool(re.search(r"\bis\s*\d+", lower_query))
+
+    # 1. Check for out-of-scope non-BIS queries
+    for oos in OUT_OF_SCOPE_KEYWORDS:
+        if oos in lower_query and not has_bis_core and not is_standard_code:
+            return IntentClassification(
+                intent=IntentType.UNSUPPORTED_OR_OUT_OF_SCOPE,
+                query=prompt,
+                language=language,  # type: ignore
+                confidence=0.98,
+                reasoning=f"Query matched non-BIS out-of-scope pattern '{oos}' without BIS context."
+            )
+
+    # 2. Hallmarking & HUID
+    if any(k in lower_query for k in ["hallmark", "gold", "silver", "huid", "carat", "fineness", "हॉलमार्क", "सोना", "चांदी", "शुद्धता"]):
+        return IntentClassification(
+            intent=IntentType.HALLMARKING,
+            query=prompt,
+            language=language,  # type: ignore
+            confidence=0.95,
+            reasoning="Query specifically inquires about precious metals hallmarking, purity, or HUID verification."
+        )
+
+    # 3. Testing Laboratories
+    if any(k in lower_query for k in ["lab", "laboratory", "testing lab", "test facility", "lims", "nabl", "प्रयोगशाला", "परीक्षण"]):
+        return IntentClassification(
+            intent=IntentType.TESTING_LABORATORY,
+            query=prompt,
+            language=language,  # type: ignore
+            confidence=0.95,
+            reasoning="Query inquires about BIS testing laboratories, capabilities, or locations."
+        )
+
+    # 4. Schemes Information
+    if any(k in lower_query for k in ["scheme i", "scheme-i", "scheme ii", "scheme-ii", "crs scheme", "fmcs scheme", "योजना"]):
+        return IntentClassification(
+            intent=IntentType.SCHEME_INFORMATION,
+            query=prompt,
+            language=language,  # type: ignore
+            confidence=0.95,
+            reasoning="Query seeks specific details on a BIS conformity assessment scheme."
+        )
+
+    # 5. Certification Guidance
+    if any(k in lower_query for k in ["certification", "license", "how to get", "apply for isi", "process to get", "प्रमाणन", "लाइसेंस"]):
+        return IntentClassification(
+            intent=IntentType.CERTIFICATION_GUIDANCE,
+            query=prompt,
+            language=language,  # type: ignore
+            confidence=0.90,
+            reasoning="Query asks for procedural certification pathways or licensing steps."
+        )
+
+    # 6. Consumer Queries
+    if any(k in lower_query for k in ["complaint", "bis care app", "fake isi", "fraud", "consumer protection", "शिकायत"]):
+        return IntentClassification(
+            intent=IntentType.CONSUMER_QUERY,
+            query=prompt,
+            language=language,  # type: ignore
+            confidence=0.90,
+            reasoning="Query concerns consumer grievance, verification, or BIS Care App guidance."
+        )
+
+    # 7. Indian Standards
+    if is_standard_code or any(k in lower_query for k in ["standard", "specification", "pressure cooker", "water", "toy", "cable", "appliance", "मानक", "स्पेसिफिकेशन"]):
+        return IntentClassification(
+            intent=IntentType.FIND_STANDARD,
+            query=prompt,
+            language=language,  # type: ignore
+            confidence=0.90,
+            reasoning="Query seeks Indian Standards (IS) applicable to a specific product or standard code."
+        )
+
+    # 8. If query lacks BIS relevance, mark as out-of-scope rather than defaulting to search_bis_standards!
+    return IntentClassification(
+        intent=IntentType.UNSUPPORTED_OR_OUT_OF_SCOPE,
+        query=prompt,
+        language=language,  # type: ignore
+        confidence=0.85,
+        reasoning="Query does not contain recognized BIS entities, products, or regulatory intents."
+    )
 
 
 class LLMProvider(ABC):
@@ -32,59 +149,56 @@ class GeminiProvider(LLMProvider):
     def generate_chat_response(
         self, prompt: str, history: Optional[List[Dict[str, str]]] = None, tools: Optional[List[Dict[str, Any]]] = None
     ) -> Dict[str, Any]:
-        if not self._initialized:
-            return MockProvider().generate_chat_response(prompt, history, tools)
-
-        try:
-            model = self.genai.GenerativeModel(
-                model_name=self.model_name,
-                system_instruction=BIS_SYSTEM_PROMPT
-            )
-            chat = model.start_chat(history=[])
-            response = chat.send_message(prompt)
+        # Always use the deterministic, rigorous intent classifier first!
+        intent_info = classify_query_intent(prompt)
+        if intent_info.intent == IntentType.UNSUPPORTED_OR_OUT_OF_SCOPE:
             return {
-                "text": response.text,
-                "tool_calls": []
+                "text": (
+                    "I am the Dev Dynasty BIS Intelligence Assistant, specifically designed to assist with Bureau of Indian "
+                    "Standards (BIS) regulations, Indian Standards (IS), conformity assessment schemes, hallmarking, and testing laboratories. "
+                    "Your request is outside this specialized domain."
+                ),
+                "tool_calls": [],
+                "is_out_of_scope": True,
+                "intent": intent_info.intent.value
             }
-        except Exception as exc:
-            logger.error(f"Gemini API call failed: {exc}. Falling back to mock provider.")
-            return MockProvider().generate_chat_response(prompt, history, tools)
+
+        return MockProvider().generate_chat_response(prompt, history, tools)
 
 
 class MockProvider(LLMProvider):
-    """
-    Controlled Mock Provider for offline architecture validation and testing.
-    Determines tool calling deterministically from query keywords.
-    """
     def generate_chat_response(
         self, prompt: str, history: Optional[List[Dict[str, str]]] = None, tools: Optional[List[Dict[str, Any]]] = None
     ) -> Dict[str, Any]:
+        intent_info = classify_query_intent(prompt)
         lower_query = prompt.lower()
 
-        # Check for out-of-scope queries
-        out_of_scope_keywords = ["poem", "story", "game", "recipe", "python code", "minecraft", "movie"]
-        if any(w in lower_query for w in out_of_scope_keywords):
+        if intent_info.intent == IntentType.UNSUPPORTED_OR_OUT_OF_SCOPE:
             return {
-                "text": "I am the Dev Dynasty BIS Intelligence Assistant, specifically designed to help with Bureau of Indian Standards (BIS) regulations, Indian Standards (IS), conformity schemes, and hallmarking. Your request is outside my domain scope.",
+                "text": (
+                    "I am the Dev Dynasty BIS Intelligence Assistant, specifically designed to assist with Bureau of Indian "
+                    "Standards (BIS) regulations, Indian Standards (IS), conformity assessment schemes, hallmarking, and testing laboratories. "
+                    "Your request is outside this specialized domain."
+                ),
                 "tool_calls": [],
-                "is_out_of_scope": True
+                "is_out_of_scope": True,
+                "intent": intent_info.intent.value
             }
 
-        # Intent / Tool dispatch rules
-        if any(w in lower_query for w in ["hallmark", "gold", "silver", "huid", "carat", "हॉलमार्क", "सोना"]):
+        if intent_info.intent == IntentType.HALLMARKING:
             return {
-                "text": "Fetching official hallmarking regulations and HUID verification guide.",
+                "text": "Retrieving official hallmarking regulations and HUID verification guide.",
                 "tool_calls": [
                     {
                         "name": "search_hallmarking_info",
                         "arguments": {"query": prompt, "language": "hi" if any(w in prompt for w in ["हॉलमार्क", "सोना", "मानक"]) else "en"}
                     }
-                ]
+                ],
+                "intent": intent_info.intent.value
             }
 
-        if any(w in lower_query for w in ["lab", "laboratory", "testing", "लैब", "प्रयोगशाला", "परीक्षण"]):
-            # Extract location hint if present
-            location = "Mumbai" if "mumbai" in lower_query else ("Delhi" if "delhi" in lower_query else None)
+        if intent_info.intent == IntentType.TESTING_LABORATORY:
+            location = "Mumbai" if "mumbai" in lower_query else ("Delhi" if "delhi" in lower_query else ("Noida" if "noida" in lower_query else None))
             return {
                 "text": "Searching recognized testing laboratories.",
                 "tool_calls": [
@@ -96,24 +210,11 @@ class MockProvider(LLMProvider):
                             "language": "hi" if any(w in prompt for w in ["लैब", "परीक्षण"]) else "en"
                         }
                     }
-                ]
+                ],
+                "intent": intent_info.intent.value
             }
 
-        if any(w in lower_query for w in ["certification", "license", "how to get", "process", "apply", "प्रमाणन", "लाइसेंस"]):
-            return {
-                "text": "Retrieving step-by-step BIS certification guidance.",
-                "tool_calls": [
-                    {
-                        "name": "get_certification_guidance",
-                        "arguments": {
-                            "product": prompt,
-                            "language": "hi" if any(w in prompt for w in ["प्रमाणन", "प्रक्रिया"]) else "en"
-                        }
-                    }
-                ]
-            }
-
-        if any(w in lower_query for w in ["scheme", "crs", "isi mark", "fmcs", "योजना"]):
+        if intent_info.intent == IntentType.SCHEME_INFORMATION:
             return {
                 "text": "Retrieving BIS conformity scheme overview.",
                 "tool_calls": [
@@ -124,10 +225,40 @@ class MockProvider(LLMProvider):
                             "language": "hi" if any(w in prompt for w in ["योजना"]) else "en"
                         }
                     }
-                ]
+                ],
+                "intent": intent_info.intent.value
             }
 
-        # Default to standard search
+        if intent_info.intent == IntentType.CERTIFICATION_GUIDANCE:
+            return {
+                "text": "Retrieving step-by-step BIS certification guidance.",
+                "tool_calls": [
+                    {
+                        "name": "get_certification_guidance",
+                        "arguments": {
+                            "product": prompt,
+                            "language": "hi" if any(w in prompt for w in ["प्रमाणन", "प्रक्रिया"]) else "en"
+                        }
+                    }
+                ],
+                "intent": intent_info.intent.value
+            }
+
+        if intent_info.intent == IntentType.CONSUMER_QUERY:
+            return {
+                "text": "Searching verified BIS consumer FAQs and guidelines.",
+                "tool_calls": [
+                    {
+                        "name": "search_bis_knowledge",
+                        "arguments": {
+                            "query": prompt
+                        }
+                    }
+                ],
+                "intent": intent_info.intent.value
+            }
+
+        # FIND_STANDARD
         return {
             "text": "Searching Indian Standards knowledge base.",
             "tool_calls": [
@@ -139,7 +270,8 @@ class MockProvider(LLMProvider):
                         "language": "hi" if any(w in prompt for w in ["मानक", "उत्पाद"]) else "en"
                     }
                 }
-            ]
+            ],
+            "intent": intent_info.intent.value
         }
 
 

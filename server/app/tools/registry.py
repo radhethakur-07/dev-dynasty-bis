@@ -1,4 +1,4 @@
-﻿from typing import Any, Callable, Dict, Optional, Type
+from typing import Any, Callable, Dict, Optional, Type
 from pydantic import BaseModel, ValidationError
 from app.core.logging import logger
 from app.schemas.responses import ErrorResponse, FinalResponseUnion
@@ -79,6 +79,7 @@ class ToolRegistry:
         if not self.is_tool_allowed(tool_name):
             logger.warning(f"Security Alert: Attempted invocation of non-allowlisted tool '{tool_name}' blocked.")
             return ErrorResponse(
+                error_code="UNAUTHORIZED_TOOL",
                 message=f"Tool '{tool_name}' is not permitted. Only controlled domain tools are allowed."
             )
 
@@ -90,11 +91,12 @@ class ToolRegistry:
         except ValidationError as val_err:
             logger.error(f"Validation failure for tool '{tool_name}': {val_err}")
             return ErrorResponse(
+                error_code="VALIDATION_ERROR",
                 message=f"Validation failed for tool arguments: {val_err.errors()[0].get('msg', 'Invalid inputs')}"
             )
         except Exception as exc:
             logger.error(f"Unexpected error validating args for tool '{tool_name}': {exc}")
-            return ErrorResponse(message="Invalid tool parameter format.")
+            return ErrorResponse(error_code="INVALID_ARGUMENTS", message="Invalid tool parameter format.")
 
         # Execute verified tool
         try:

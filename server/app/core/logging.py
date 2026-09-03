@@ -1,10 +1,16 @@
-﻿import logging
+import logging
 import sys
 import time
 import uuid
 from typing import Callable
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
+
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 
 logging.basicConfig(
     level=logging.INFO,
