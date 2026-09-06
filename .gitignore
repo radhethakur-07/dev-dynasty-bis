@@ -1,11 +1,17 @@
-﻿# Python
+# ============================================================
+# DEV DYNASTY — BIS Intelligence Assistant (SIH267107)
+# .gitignore — Comprehensive exclusions
+# ============================================================
+
+# ────────────────────────────────────────────
+# PYTHON
+# ────────────────────────────────────────────
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
 env/
-build/
 develop-eggs/
 dist/
 downloads/
@@ -23,31 +29,56 @@ wheels/
 .pytest_cache/
 .coverage
 htmlcov/
-.venv
+
+# Virtual environments
+.venv/
 venv/
 ENV/
 
-# Node
-client/node_modules/
-client/.next/
-client/out/
-client/build/
-client/.vercel/
+# ────────────────────────────────────────────
+# NODE / NEXT.JS
+# ────────────────────────────────────────────
+node_modules/
+.next/
+out/
+build/
+.vercel/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+*.tsbuildinfo
+next-env.d.ts
 
-# Environment Variables & Secrets (CRITICAL)
+# ────────────────────────────────────────────
+# ENVIRONMENT VARIABLES & SECRETS (CRITICAL)
+# ────────────────────────────────────────────
 .env
 .env.local
+.env.development
 .env.development.local
+.env.test
 .env.test.local
+.env.production
 .env.production.local
 server/.env
 client/.env.local
+*.pem
+*.key
+*.cert
 
+# ────────────────────────────────────────────
+# GENERATED DATA FILES (too large / regeneratable)
+# ────────────────────────────────────────────
+server/data/knowledge_store.json
+server/data/reports/ingestion_checkpoint.json
+server/data/reports/ingestion_report.json
+server/data/reports/qa_retrieval_report.json
+server/data/reports/data_quality_report.md
+
+# ────────────────────────────────────────────
 # IDE & OS
+# ────────────────────────────────────────────
 .vscode/
 .idea/
 *.swp
@@ -55,3 +86,19 @@ client/.env.local
 *~
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# ────────────────────────────────────────────
+# LOGS
+# ────────────────────────────────────────────
+*.log
+logs/
+server/logs/
+
+# ────────────────────────────────────────────
+# MISC
+# ────────────────────────────────────────────
+*.tmp
+*.bak
+*.orig
+.cache/
