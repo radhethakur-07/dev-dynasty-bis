@@ -78,24 +78,27 @@ def test_no_sample_demo_leak_in_schemes():
 
 
 def test_laboratory_cement_testing_without_location():
-    """Verify cement testing without location does NOT return arbitrary first 5 labs."""
+    """Verify cement testing returns genuine recognized cement laboratories (NCCBM) rather than arbitrary unrelated labs."""
     labs = laboratory_repo.search_laboratories(product_or_test="cement testing")
     assert isinstance(labs, list)
-    assert len(labs) == 0
+    assert len(labs) > 0
+    # Every matched lab must have cement in its name or scope
+    for lab in labs:
+        assert "cement" in lab["name"].lower() or "cement" in lab["scope_of_testing"].lower()
 
     service_resp = laboratory_service.find_labs(product_or_test="cement testing")
     assert isinstance(service_resp, LaboratoryResultsResponse)
-    assert len(service_resp.laboratories) == 0
-    assert "No recognized BIS testing laboratories found" in service_resp.summary
+    assert len(service_resp.laboratories) > 0
+    assert any("cement" in l.name.lower() for l in service_resp.laboratories)
 
 
-def test_laboratory_electronics_testing_without_location():
-    """Verify searching for unlisted discipline returns honest no-match instead of arbitrary labs."""
-    labs = laboratory_repo.search_laboratories(product_or_test="electronics testing")
+def test_laboratory_unlisted_discipline_returns_honest_no_match():
+    """Verify searching for completely unlisted discipline returns honest no-match instead of arbitrary labs."""
+    labs = laboratory_repo.search_laboratories(product_or_test="quantum cryogenic propulsion testing")
     assert isinstance(labs, list)
     assert len(labs) == 0
 
-    service_resp = laboratory_service.find_labs(product_or_test="electronics testing")
+    service_resp = laboratory_service.find_labs(product_or_test="quantum cryogenic propulsion testing")
     assert len(service_resp.laboratories) == 0
     assert "No recognized BIS testing laboratories found" in service_resp.summary
 

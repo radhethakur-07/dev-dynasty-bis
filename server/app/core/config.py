@@ -1,4 +1,4 @@
-﻿from typing import Optional
+from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,7 +10,8 @@ class Settings(BaseSettings):
 
     # AI Configuration
     GEMINI_API_KEY: Optional[str] = None
-    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_MODEL: str = "models/gemini-3.5-flash-lite"
+    GEMINI_FALLBACK_MODEL: str = "models/gemini-3.6-flash"
     
     # Embedding model and dimension (using models/gemini-embedding-001 with 768 dim)
     EMBEDDING_MODEL: str = "models/gemini-embedding-001"
@@ -28,6 +29,13 @@ class Settings(BaseSettings):
 
     # Strict Demo Flag
     DEMO_DATA_NOTICE: str = "Demo / Sample / Not official"
+
+    # Auth Configuration
+    JWT_SECRET: str = "dev-dynasty-bis-jwt-secret-sih267107-change-in-production"
+    JWT_EXPIRY_HOURS: int = 24
+    BREVO_API_KEY: Optional[str] = None
+    DEMO_USER_EMAIL: str = "demo@devdynasty.bis"
+    DEMO_USER_PASSWORD: str = "BISDemo2024!"
 
     model_config = SettingsConfigDict(
         env_file=".env",

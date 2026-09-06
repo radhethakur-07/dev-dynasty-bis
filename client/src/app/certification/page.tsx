@@ -8,16 +8,20 @@ import {
   Award, 
   Search, 
   Loader2, 
-  Globe, 
-  FileCheck2, 
-  ShieldCheck, 
-  Sparkles, 
   Layers, 
-  RefreshCw,
-  Cpu,
-  PackageCheck,
-  Factory,
-  Globe2
+  Cpu, 
+  PackageCheck, 
+  Factory, 
+  Globe2,
+  CheckCircle2,
+  AlertCircle,
+  HelpCircle,
+  ArrowRight,
+  ShieldCheck,
+  FileText,
+  Clock,
+  Check,
+  X
 } from "lucide-react";
 
 interface SupportedScheme {
@@ -28,6 +32,10 @@ interface SupportedScheme {
   default_product: string;
   description: string;
   icon: any;
+  audit_required: boolean;
+  testing_model: string;
+  typical_timeline: string;
+  target_audience: string;
 }
 
 const SUPPORTED_SCHEMES: SupportedScheme[] = [
@@ -37,8 +45,12 @@ const SUPPORTED_SCHEMES: SupportedScheme[] = [
     short_name: "Scheme I (ISI Mark)",
     badge: "Factory Audit + In-House Lab",
     default_product: "Domestic Pressure Cooker",
-    description: "Standard domestic product certification requiring in-house lab, SIT compliance, factory audit, and independent testing.",
-    icon: Factory
+    description: "Standard domestic manufacturing certification requiring established in-house testing facilities, SIT adherence, factory inspection, and independent laboratory testing.",
+    icon: Factory,
+    audit_required: true,
+    testing_model: "In-house lab testing + BIS officer sample testing",
+    typical_timeline: "30 days (Simplified) to 90 days (Normal)",
+    target_audience: "Domestic manufacturers of mandated products"
   },
   {
     id: "scheme_2",
@@ -46,17 +58,25 @@ const SUPPORTED_SCHEMES: SupportedScheme[] = [
     short_name: "Scheme II (CRS)",
     badge: "Lab Test Report Only (No Factory Audit)",
     default_product: "Laptops & Electronic Tablets",
-    description: "Self-declaration of conformity for notified Electronics & IT goods based on 90-day lab test report from BIS recognized lab.",
-    icon: Cpu
+    description: "Self-declaration of conformity for notified Electronics, IT, and Solar goods based solely on a valid test report (issued within 90 days) from a BIS recognized lab.",
+    icon: Cpu,
+    audit_required: false,
+    testing_model: "Test report from BIS recognized lab (within 90 days)",
+    typical_timeline: "15 to 20 working days",
+    target_audience: "Electronics & IT manufacturers and importers"
   },
   {
     id: "scheme_4",
     name: "Scheme IV — Certificate of Conformity (CoC)",
     short_name: "Scheme IV (CoC)",
     badge: "Batch / Consignment Clearance",
-    default_product: "Imported Steel Batch Consignment",
-    description: "Batch-specific testing and conformity certificate where continuous factory licensing is not applicable.",
-    icon: PackageCheck
+    default_product: "Imported Structural Steel Consignment",
+    description: "Consignment-bound certification where each individual batch or consignment is sampled and tested independently, without a continuous factory license.",
+    icon: PackageCheck,
+    audit_required: false,
+    testing_model: "Batch-specific sampling and destructive testing",
+    typical_timeline: "Per consignment clearance",
+    target_audience: "One-time importers & customized project suppliers"
   },
   {
     id: "scheme_x",
@@ -64,8 +84,12 @@ const SUPPORTED_SCHEMES: SupportedScheme[] = [
     short_name: "Scheme X",
     badge: "Type-Testing + Technical File",
     default_product: "Low-Voltage Switchgear & Industrial Machinery",
-    description: "Comprehensive certification for heavy industrial machinery, controlgear, transformers, and complex electrical rotating plant.",
-    icon: Layers
+    description: "Comprehensive certification for heavy industrial machinery, switchgear, transformers, and rotating electrical plant governed by Gazette S.O. 4531(E).",
+    icon: Layers,
+    audit_required: true,
+    testing_model: "Type-testing + Technical Construction File (TCF)",
+    typical_timeline: "60 to 120 days",
+    target_audience: "Heavy engineering & machinery manufacturers"
   },
   {
     id: "fmcs",
@@ -73,249 +97,226 @@ const SUPPORTED_SCHEMES: SupportedScheme[] = [
     short_name: "FMCS (Scheme I)",
     badge: "Overseas Audit + Mandatory AIR",
     default_product: "PVC Cables manufactured abroad",
-    description: "Scheme-I certification for plants outside India exporting to India, requiring Authorized Indian Representative (AIR).",
-    icon: Globe2
+    description: "Grant of BIS license to overseas manufacturing plants exporting to India. Requires appointment of Authorized Indian Representative (AIR) and Performance Bank Guarantee.",
+    icon: Globe2,
+    audit_required: true,
+    testing_model: "Overseas factory audit + Indian laboratory testing",
+    typical_timeline: "3 to 6 months",
+    target_audience: "Overseas manufacturers exporting to India"
   }
 ];
 
 export default function CertificationPage() {
-  const [product, setProduct] = useState("");
-  const [selectedScheme, setSelectedScheme] = useState(SUPPORTED_SCHEMES[0].short_name);
+  const [selectedSchemeId, setSelectedSchemeId] = useState<string>("scheme_1");
+  const [productSearch, setProductSearch] = useState("");
   const [language, setLanguage] = useState<Language>("en");
   const [isLoading, setIsLoading] = useState(false);
   const [guidance, setGuidance] = useState<CertificationGuidanceResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showMatrix, setShowMatrix] = useState(true);
 
-  const executeSearch = async (targetProduct: string, targetScheme: string, lang: Language) => {
-    if (!targetProduct.trim()) return;
+  const selectedScheme = SUPPORTED_SCHEMES.find((s) => s.id === selectedSchemeId) || SUPPORTED_SCHEMES[0];
+
+  const handleFetchGuidance = async (schemeToUse?: SupportedScheme, productToUse?: string) => {
+    const s = schemeToUse || selectedScheme;
+    const p = productToUse !== undefined ? productToUse : (productSearch || s.default_product);
 
     setIsLoading(true);
     setError(null);
+    setGuidance(null);
+
     try {
-      const data = await getCertificationGuidance(targetProduct.trim(), targetScheme, lang);
+      const data = await getCertificationGuidance(s.short_name, p, language);
       setGuidance(data);
     } catch (err: any) {
-      setError(err.message || "Failed to retrieve certification guidance.");
+      setError(err.message || "Failed to retrieve official certification guidance.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    executeSearch(product, selectedScheme, language);
-  };
-
-  const handleQuickSchemeSelect = (schemeItem: SupportedScheme) => {
-    setSelectedScheme(schemeItem.short_name);
-    setProduct(schemeItem.default_product);
-    executeSearch(schemeItem.default_product, schemeItem.short_name, language);
-  };
-
-  const handleResetSearch = () => {
-    setProduct("");
-    setGuidance(null);
-    setError(null);
-  };
-
   return (
-    <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      {/* Page Title & Context Header */}
+    <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+      {/* Title & Introduction */}
       <div className="space-y-2">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold">
           <Award className="w-3.5 h-3.5" />
-          <span>Official BIS Conformity Assessment & Licensing</span>
+          <span>BIS Conformity Assessment Navigator • 5 Authorized Schemes</span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100">
-          Certification Guidance & Scheme Discovery
+          BIS Certification Pathways & Schemes Navigator
         </h1>
-        <p className="text-sm text-slate-400 max-w-3xl leading-relaxed">
-          Search step-by-step regulatory pathways, in-house laboratory prerequisites, factory audit rules, and required documentation directly from the official BIS knowledge repository.
+        <p className="text-sm text-slate-400 max-w-3xl">
+          Compare conformity assessment schemes, understand mandatory factory audit requirements vs laboratory-only testing, and generate official step-by-step licensing roadmaps.
         </p>
       </div>
 
-      {/* Query & Scheme Selector Form */}
-      <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/70 shadow-xl space-y-6">
-        <form onSubmit={handleFormSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Target Product Input */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">
-                Target Product / Article <span className="text-blue-400">*</span>
-              </label>
-              <input
-                type="text"
-                value={product}
-                onChange={(e) => setProduct(e.target.value)}
-                placeholder="e.g. Domestic Pressure Cooker, Laptops, Cement, Switchgear..."
-                required
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
-              />
-            </div>
-
-            {/* Supported Scheme Dropdown */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">
-                Official Certification Scheme
-              </label>
-              <select
-                value={selectedScheme}
-                onChange={(e) => setSelectedScheme(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
-              >
-                {SUPPORTED_SCHEMES.map((s) => (
-                  <option key={s.id} value={s.short_name}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Quick Preset Buttons for Supported Schemes */}
-          <div className="space-y-2 pt-1">
-            <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
-              <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-              <span>Click a supported scheme to query official requirements:</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {SUPPORTED_SCHEMES.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => handleQuickSchemeSelect(s)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                    selectedScheme === s.short_name
-                      ? "bg-blue-600/20 border-blue-500/50 text-blue-300"
-                      : "bg-slate-800/80 border-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white"
-                  }`}
-                >
-                  <s.icon className="w-3 h-3 text-blue-400 flex-shrink-0" />
-                  <span>{s.short_name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Bottom Bar: Language Toggle, Submit, and Reset */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800/80">
+      {/* Interactive Scheme Cards Selector */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+        {SUPPORTED_SCHEMES.map((scheme) => {
+          const Icon = scheme.icon;
+          const isSelected = selectedSchemeId === scheme.id;
+          return (
             <button
+              key={scheme.id}
               type="button"
               onClick={() => {
-                const nextLang = language === "en" ? "hi" : "en";
-                setLanguage(nextLang);
-                if (product.trim()) {
-                  executeSearch(product, selectedScheme, nextLang);
-                }
+                setSelectedSchemeId(scheme.id);
+                handleFetchGuidance(scheme);
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs font-semibold transition-colors"
+              className={`p-4 rounded-2xl border text-left transition-all flex flex-col justify-between space-y-3 ${
+                isSelected
+                  ? "bg-blue-950/40 border-blue-500 shadow-lg shadow-blue-500/10 scale-[1.02]"
+                  : "bg-slate-900/50 border-slate-800/80 hover:bg-slate-900/90 hover:border-slate-700"
+              }`}
             >
-              <Globe className="w-3.5 h-3.5 text-blue-400" />
-              <span>Language: {language === "en" ? "English" : "हिन्दी"}</span>
+              <div className="space-y-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center">
+                  <Icon className="w-4 h-4" />
+                </div>
+                <div className="text-xs font-bold text-slate-100 line-clamp-2">
+                  {scheme.short_name}
+                </div>
+                <div className="text-[10px] text-slate-400 line-clamp-2 leading-relaxed">
+                  {scheme.badge}
+                </div>
+              </div>
+
+              <div className="text-[10px] font-semibold text-blue-400 flex items-center gap-1">
+                <span>{isSelected ? "Active View" : "Select Scheme"}</span>
+                <ArrowRight className="w-3 h-3" />
+              </div>
             </button>
-
-            <div className="flex items-center gap-2">
-              {guidance && (
-                <button
-                  type="button"
-                  onClick={handleResetSearch}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  <span>New Search</span>
-                </button>
-              )}
-
-              <button
-                type="submit"
-                disabled={isLoading || !product.trim()}
-                className="inline-flex items-center gap-2 px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold disabled:opacity-50 transition-all shadow-md shadow-blue-600/20"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Searching BIS knowledge base...</span>
-                  </>
-                ) : (
-                  <>
-                    <Search className="w-4 h-4" />
-                    <span>Search Certification Guidance</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </form>
+          );
+        })}
       </div>
 
-      {/* Error Message */}
-      {error && (
-        <div className="p-4 rounded-xl border border-red-500/30 bg-red-950/20 text-xs text-red-300">
-          {error}
-        </div>
-      )}
-
-      {/* Active Loading State */}
-      {isLoading && (
-        <div className="p-10 rounded-2xl border border-blue-500/30 bg-slate-900/50 flex flex-col items-center justify-center text-center space-y-3">
-          <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
-          <div className="space-y-1">
-            <h4 className="text-sm font-semibold text-slate-200">
-              Searching BIS knowledge base...
-            </h4>
-            <p className="text-xs text-slate-400 max-w-sm">
-              Retrieving authentic scheme regulations, in-house lab prerequisites, and inspection procedures from Supabase pgvector.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Guidance Results Component */}
-      {!isLoading && guidance && (
-        <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/50 shadow-2xl">
-          <CertificationSteps data={guidance} />
-        </div>
-      )}
-
-      {/* Proper Empty State: Visible only when no result is loaded */}
-      {!isLoading && !guidance && (
-        <div className="p-8 rounded-2xl border border-dashed border-slate-800 bg-slate-900/30 text-center space-y-6">
-          <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto text-blue-400">
-            <ShieldCheck className="w-6 h-6" />
-          </div>
-
-          <div className="space-y-1.5 max-w-md mx-auto">
-            <h3 className="text-base font-bold text-slate-100">
-              Search Official BIS Certification Guidance
+      {/* Side-by-Side Scheme Comparison Matrix */}
+      <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Layers className="w-4 h-4 text-blue-400" />
+            <h3 className="text-sm font-bold text-slate-100">
+              Interactive Scheme Comparison Matrix (SIH Decision Guide)
             </h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              No results preloaded. Enter a product name and choose a scheme above or click one of the verified official schemes below to begin.
-            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowMatrix(!showMatrix)}
+            className="text-xs text-blue-400 hover:text-blue-300 underline"
+          >
+            {showMatrix ? "Hide Matrix" : "Show Full Comparison"}
+          </button>
+        </div>
+
+        {showMatrix && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left text-slate-300">
+              <thead className="text-[11px] uppercase tracking-wider text-slate-400 bg-slate-950/80 border-b border-slate-800">
+                <tr>
+                  <th className="py-3 px-3">Scheme</th>
+                  <th className="py-3 px-3">Factory Audit?</th>
+                  <th className="py-3 px-3">Testing Model</th>
+                  <th className="py-3 px-3">Typical Timeline</th>
+                  <th className="py-3 px-3">Target Sector</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/80">
+                {SUPPORTED_SCHEMES.map((s) => (
+                  <tr
+                    key={s.id}
+                    className={`hover:bg-slate-800/40 transition-colors ${
+                      selectedSchemeId === s.id ? "bg-blue-950/20 font-medium" : ""
+                    }`}
+                  >
+                    <td className="py-3 px-3 font-semibold text-slate-200">
+                      {s.short_name}
+                    </td>
+                    <td className="py-3 px-3">
+                      {s.audit_required ? (
+                        <span className="inline-flex items-center gap-1 text-amber-400">
+                          <Check className="w-3.5 h-3.5" /> Mandatory
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-emerald-400">
+                          <X className="w-3.5 h-3.5" /> Exempt
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3 px-3 text-slate-400">{s.testing_model}</td>
+                    <td className="py-3 px-3 text-slate-400">{s.typical_timeline}</td>
+                    <td className="py-3 px-3 text-slate-400">{s.target_audience}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Query Bar for Specific Product */}
+      <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/60 shadow-xl space-y-4">
+        <div className="text-xs font-bold text-slate-200">
+          Generate Procedural Guidance for: <span className="text-blue-400 font-extrabold">{selectedScheme.name}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+              placeholder={`Enter specific product (Default: '${selectedScheme.default_product}')...`}
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => handleFetchGuidance()}
+            disabled={isLoading}
+            className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-md shadow-blue-600/30 flex items-center gap-2 flex-shrink-0"
+          >
+            {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Award className="w-3.5 h-3.5" />}
+            <span>Get Roadmap</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Loading State */}
+      {isLoading && (
+        <div className="p-12 text-center space-y-3 rounded-2xl border border-slate-800 bg-slate-900/30">
+          <Loader2 className="w-8 h-8 text-blue-400 animate-spin mx-auto" />
+          <div className="text-sm font-semibold text-slate-200">
+            Querying Official BIS Regulations & Conformity Guidelines in Supabase...
+          </div>
+          <div className="text-xs text-slate-400">
+            Retrieving grounded phase timelines, documentation checklists, and SIT requirements.
+          </div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="p-4 rounded-xl border border-red-500/30 bg-red-950/20 text-red-300 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Guidance Roadmap */}
+      {guidance && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+              <span>Grounded Certification Roadmap</span>
+            </h2>
+            <span className="text-xs text-slate-400">
+              Source: Bureau of Indian Standards Official Regulations
+            </span>
           </div>
 
-          {/* Cards for Supported Schemes in Empty State */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-left max-w-4xl mx-auto pt-2">
-            {SUPPORTED_SCHEMES.map((s) => (
-              <div
-                key={s.id}
-                onClick={() => handleQuickSchemeSelect(s)}
-                className="p-4 rounded-xl border border-slate-800/80 bg-slate-900/40 hover:bg-slate-900/90 hover:border-blue-500/40 transition-all cursor-pointer group space-y-2"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-200 group-hover:text-blue-300 transition-colors">
-                    {s.short_name}
-                  </span>
-                  <s.icon className="w-4 h-4 text-slate-400 group-hover:text-blue-400 transition-colors" />
-                </div>
-                <div className="text-[10px] font-semibold text-blue-400/90 uppercase tracking-wide">
-                  {s.badge}
-                </div>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  {s.description}
-                </p>
-              </div>
-            ))}
-          </div>
+          <CertificationSteps data={guidance} />
         </div>
       )}
     </div>

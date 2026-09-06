@@ -1,4 +1,4 @@
-﻿-- ============================================================
+-- ============================================================
 -- DEV DYNASTY — SIH267107: BIS INTELLIGENCE ASSISTANT
 -- SUPABASE POSTGRESQL + PGVECTOR DATABASE SCHEMA
 -- ============================================================
@@ -6,7 +6,19 @@
 -- 1. Enable pgvector extension
 CREATE EXTENSION IF NOT EXISTS vector;
 
--- 2. Standards Metadata Table
+-- 1b. Users Authentication Table
+CREATE TABLE IF NOT EXISTS app_users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    name TEXT,
+    is_verified BOOLEAN DEFAULT FALSE,
+    verification_code TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_app_users_email ON app_users(email);
+
 CREATE TABLE IF NOT EXISTS standards_metadata (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     code TEXT NOT NULL UNIQUE,

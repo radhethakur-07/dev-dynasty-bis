@@ -1,8 +1,8 @@
-﻿"use client";
+"use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { searchStandards } from "@/lib/api";
-import { StandardRecommendationResponse, Language } from "@/types/api";
+import { StandardRecommendationResponse, Language, StandardItem } from "@/types/api";
 import { StandardCard } from "@/components/responses/StandardCard";
 import {
   Search,
@@ -15,44 +15,62 @@ import {
   Globe,
   AlertCircle,
   HelpCircle,
-  CheckCircle2
+  CheckCircle2,
+  Cpu,
+  ShieldAlert,
+  ArrowRight,
+  Filter
 } from "lucide-react";
 
 export default function StandardsFinderPage() {
+  const [activeTab, setActiveTab] = useState<"instant" | "analyzer">("instant");
+  
+  // Instant Search State
+  const [instantQuery, setInstantQuery] = useState("");
+  const [selectedSector, setSelectedSector] = useState("");
+  
+  // AI Spec Analyzer State
+  const [specText, setSpecText] = useState("");
   const [product, setProduct] = useState("");
   const [category, setCategory] = useState("");
   const [material, setMaterial] = useState("");
   const [intendedUse, setIntendedUse] = useState("");
-  const [description, setDescription] = useState("");
   const [language, setLanguage] = useState<Language>("en");
+  
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<StandardRecommendationResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const categories = [
-    { value: "", label: "Auto-detect / All Categories" },
-    { value: "Consumer Goods / Mechanical", label: "Consumer Goods & Mechanical (Cookers, Utensils)" },
-    { value: "Food / Consumer", label: "Food & Beverages (Packaged Water, Milk)" },
-    { value: "Electrical Appliances", label: "Electrical & Electronics (Plugs, Switches, Appliances)" },
-    { value: "Toys", label: "Toys & Children Products" },
-    { value: "Chemicals & Materials", label: "Chemicals, Cement, Construction" }
+  const sectors = [
+    { label: "All Sectors", value: "" },
+    { label: "Cement & Construction", value: "cement" },
+    { label: "Steel & TMT Bars", value: "steel" },
+    { label: "Electrical Appliances", value: "electrical" },
+    { label: "Electronics & IT (CRS)", value: "electronics" },
+    { label: "Toys & Child Safety", value: "toys" },
+    { label: "Food & Drinking Water", value: "water" },
+    { label: "Automotive & Helmets", value: "helmet" },
+    { label: "Chemicals & Gas Cylinders", value: "cylinder" }
   ];
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!product.trim()) return;
+  const handleSearch = async (queryOverride?: string, sectorOverride?: string) => {
+    const q = queryOverride !== undefined ? queryOverride : (activeTab === "instant" ? instantQuery : product);
+    if (!q.trim()) return;
 
     setIsLoading(true);
     setError(null);
     setResult(null);
 
+    const cat = sectorOverride !== undefined ? sectorOverride : category;
+
     try {
       const data = await searchStandards({
-        product: product.trim(),
-        category: category || undefined,
+        product: q.trim(),
+        query: q.trim(),
+        category: cat || undefined,
         material: material.trim() || undefined,
         intended_use: intendedUse.trim() || undefined,
-        description: description.trim() || undefined,
+        description: specText.trim() || undefined,
         language
       });
       setResult(data);
@@ -63,20 +81,68 @@ export default function StandardsFinderPage() {
     }
   };
 
-  const setPreset = (
-    pName: string,
-    pCat: string,
-    pMat: string,
-    pUse: string,
-    pDesc: string
-  ) => {
-    setProduct(pName);
-    setCategory(pCat);
-    setMaterial(pMat);
-    setIntendedUse(pUse);
-    setDescription(pDesc);
-    setResult(null);
+  // Analyze unstructured text
+  const handleAnalyzeSpec = () => {
+    if (!specText.trim()) return;
+
+    // Simple heuristic parser for unstructured specs
+    let detectedProduct = specText.split(".")[0].slice(0, 50);
+    let detectedMaterial = "";
+    let detectedUse = "";
+    let detectedCat = "";
+
+    const lower = specText ? specText.toLowerCase() : "";
+    if (lower.includes("steel")) detectedMaterial = "Stainless Steel / Carbon Steel";
+    else if (lower.includes("aluminum") || lower.includes("aluminium")) detectedMaterial = "Aluminium Alloy";
+    else if (lower.includes("plastic") || lower.includes("polymer")) detectedMaterial = "Polymer / Plastic";
+
+    if (lower.includes("kitchen") || lower.includes("domestic") || lower.includes("home")) detectedUse = "Domestic Household Use";
+    else if (lower.includes("industrial") || lower.includes("factory")) detectedUse = "Industrial Applications";
+    else if (lower.includes("vehicle") || lower.includes("automotive")) detectedUse = "Automotive Road Transport";
+
+    if (lower.includes("cooker") || lower.includes("utensil")) {
+      detectedProduct = "Domestic Pressure Cooker";
+      detectedCat = "Consumer Goods / Mechanical";
+    } else if (lower.includes("water") || lower.includes("drinking")) {
+      detectedProduct = "Packaged Drinking Water";
+      detectedCat = "Food / Consumer";
+    } else if (lower.includes("cement") || lower.includes("concrete")) {
+      detectedProduct = "Ordinary Portland Cement";
+      detectedCat = "Chemicals & Materials";
+    } else if (lower.includes("battery") || lower.includes("laptop") || lower.includes("tablet")) {
+      detectedProduct = "Information Technology Equipment & Batteries";
+      detectedCat = "Electronics and IT Goods (Scheme II — CRS)";
+    } else if (lower.includes("toy")) {
+      detectedProduct = "Safety of Toys";
+      detectedCat = "Toys";
+    }
+
+    setProduct(detectedProduct);
+    setMaterial(detectedMaterial);
+    setIntendedUse(detectedUse);
+    setCategory(detectedCat);
+
+    handleSearch(detectedProduct, detectedCat);
   };
+
+  const sampleSpecs = [
+    {
+      title: "Domestic Pressure Cooker",
+      spec: "Manufacturing an aluminium alloy pressure cooker of 5-liter capacity with spring-loaded weight safety valve and gasket release for domestic kitchen cooking."
+    },
+    {
+      title: "Packaged Drinking Water",
+      spec: "Setting up a water treatment bottling plant supplying 1-liter sealed PET bottles of purified water treated by reverse osmosis, UV, and ozonation."
+    },
+    {
+      title: "Laptop / Lithium Battery Pack",
+      spec: "Importing rechargeable secondary lithium-ion pouch cell battery packs for portable laptop computers and electronic tablets."
+    },
+    {
+      title: "Motorcycle Safety Helmet",
+      spec: "Manufacturing protective headgear and protective helmets for two-wheeler motor vehicle riders with polycarbonate visor and chin strap."
+    }
+  ];
 
   return (
     <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10 space-y-8">
@@ -84,246 +150,194 @@ export default function StandardsFinderPage() {
       <div className="space-y-2">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold">
           <BookOpen className="w-3.5 h-3.5" />
-          <span>Product-to-Standard Discovery Engine</span>
+          <span>Product-to-Standard Discovery Engine • 753+ Grounded Standards</span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100">
           Product-to-Standard Discovery Engine
         </h1>
-        <p className="text-sm text-slate-400 max-w-2xl">
-          Enter your product attributes to identify Potentially Relevant Indian Standards (IS), mandatory Quality Control Orders (QCOs), and test specifications.
+        <p className="text-sm text-slate-400 max-w-3xl">
+          Identify applicable Indian Standards (IS), compulsory Quality Control Orders (QCOs), and test specifications by product name or technical description.
         </p>
       </div>
 
-      {/* Form Card */}
-      <div className="p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/60 shadow-xl space-y-6 backdrop-blur-sm">
-        <form onSubmit={handleSearch} className="space-y-5">
-          {/* Row 1: Product Name & Language */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="sm:col-span-2 space-y-1.5">
-              <label className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
-                <span>Product Name</span>
-                <span className="text-blue-400">*</span>
-              </label>
-              <input
-                type="text"
-                value={product}
-                onChange={(e) => setProduct(e.target.value)}
-                placeholder="e.g., Domestic Pressure Cooker, Packaged Water, Baby Rattles..."
-                required
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
-              />
-            </div>
+      {/* Mode Selector Tabs */}
+      <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-slate-900/80 border border-slate-800 w-fit">
+        <button
+          type="button"
+          onClick={() => setActiveTab("instant")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            activeTab === "instant"
+              ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+              : "text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          <Search className="w-3.5 h-3.5" />
+          <span>Instant Database Search</span>
+        </button>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-200">Language Preference</label>
-              <button
-                type="button"
-                onClick={() => setLanguage(language === "en" ? "hi" : "en")}
-                className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-200 hover:bg-slate-900 transition-colors"
-              >
-                <span className="flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-blue-400" />
-                  {language === "en" ? "English" : "हिन्दी"}
-                </span>
-                <span className="text-[11px] font-medium text-slate-500">Switch</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Row 2: Category & Material */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-slate-400" />
-                <span>Product Category / Sector</span>
-              </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
-              >
-                {categories.map((c, idx) => (
-                  <option key={idx} value={c.value} className="bg-slate-950 text-slate-200">
-                    {c.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
-                <Wrench className="w-3.5 h-3.5 text-slate-400" />
-                <span>Material Composition</span>
-              </label>
-              <input
-                type="text"
-                value={material}
-                onChange={(e) => setMaterial(e.target.value)}
-                placeholder="e.g., Aluminium, Stainless Steel, Polymer, Glass..."
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
-              />
-            </div>
-          </div>
-
-          {/* Row 3: Intended Use */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-slate-400" />
-              <span>Intended Use / Operating Environment</span>
-            </label>
-            <input
-              type="text"
-              value={intendedUse}
-              onChange={(e) => setIntendedUse(e.target.value)}
-              placeholder="e.g., Domestic kitchen cooking, Direct human consumption, Children under 14..."
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
-            />
-          </div>
-
-          {/* Row 4: Detailed Description */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
-              <FileText className="w-3.5 h-3.5 text-slate-400" />
-              <span>Technical Description / Parameters (Optional)</span>
-            </label>
-            <textarea
-              rows={2}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Provide technical specifications, capacity (e.g. 5 litres), voltage rating, or safety features..."
-              className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
-            />
-          </div>
-
-          {/* Preset Prompts */}
-          <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-            <span className="text-slate-500 font-medium">Quick examples:</span>
-            <button
-              type="button"
-              onClick={() =>
-                setPreset(
-                  "Domestic Pressure Cooker",
-                  "Consumer Goods / Mechanical",
-                  "Aluminium / Stainless Steel",
-                  "Domestic food cooking",
-                  "Capacity between 1 and 15 litres with safety relief valve"
-                )
-              }
-              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors text-[11px]"
-            >
-              Domestic Pressure Cooker
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                setPreset(
-                  "Packaged Drinking Water",
-                  "Food / Consumer",
-                  "PET Bottle",
-                  "Direct human consumption",
-                  "Treated drinking water packaged in food-grade plastic"
-                )
-              }
-              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors text-[11px]"
-            >
-              Packaged Drinking Water
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                setPreset(
-                  "Plastic Toys",
-                  "Toys",
-                  "Non-toxic Polymer",
-                  "Children play under 14 years",
-                  "Mechanical and physical safety properties for play articles"
-                )
-              }
-              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors text-[11px]"
-            >
-              Plastic Toys
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                setPreset(
-                  "Household Electrical Appliance",
-                  "Electrical Appliances",
-                  "Insulated plastic & copper",
-                  "Domestic electrical use",
-                  "Safety requirements for household electrical appliances"
-                )
-              }
-              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors text-[11px]"
-            >
-              Electrical Appliances
-            </button>
-          </div>
-
-          {/* Submit Button */}
-          <div className="pt-2">
-            <button
-              type="submit"
-              disabled={isLoading || !product.trim()}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold disabled:opacity-50 transition-all shadow-md shadow-blue-600/20 cursor-pointer disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Evaluating Standards against Knowledge Base...</span>
-                </>
-              ) : (
-                <>
-                  <Search className="w-4 h-4" />
-                  <span>Search Potentially Relevant Standards</span>
-                </>
-              )}
-            </button>
-          </div>
-        </form>
+        <button
+          type="button"
+          onClick={() => setActiveTab("analyzer")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            activeTab === "analyzer"
+              ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+              : "text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>AI Product Spec Analyzer (For MSMEs / Startups)</span>
+        </button>
       </div>
 
-      {/* Loading Skeleton State */}
-      {isLoading && (
-        <div className="p-8 rounded-2xl border border-slate-800 bg-slate-900/40 text-center space-y-3 animate-pulse">
-          <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-500/10 text-blue-400">
-            <Loader2 className="w-5 h-5 animate-spin" />
-          </div>
-          <h3 className="text-sm font-semibold text-slate-200">
-            Analyzing product attributes against BIS repository...
-          </h3>
-          <p className="text-xs text-slate-400 max-w-md mx-auto">
-            Checking Indian Standards metadata, category alignments, and pgvector semantic chunks with strict relevance filtering.
-          </p>
+      {/* TAB 1: Instant Search */}
+      {activeTab === "instant" && (
+        <div className="p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/60 shadow-xl space-y-6 backdrop-blur-sm">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSearch();
+            }}
+            className="space-y-4"
+          >
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <input
+                type="text"
+                value={instantQuery}
+                onChange={(e) => setInstantQuery(e.target.value)}
+                placeholder="Type a product name or standard code (e.g., 'pressure cooker', 'IS 269', 'cables', 'toys', 'helmet')..."
+                className="w-full pl-12 pr-32 py-3.5 rounded-xl bg-slate-950/80 border border-slate-700 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+              />
+              <button
+                type="submit"
+                disabled={isLoading || !instantQuery.trim()}
+                className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-bold transition-colors flex items-center gap-1.5"
+              >
+                {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+                <span>Search</span>
+              </button>
+            </div>
+
+            {/* Sector Filters */}
+            <div className="space-y-2">
+              <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                <Filter className="w-3 h-3 text-blue-400" />
+                Filter by Industry Sector:
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {sectors.map((sec, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setSelectedSector(sec.value);
+                      if (instantQuery.trim()) {
+                        handleSearch(instantQuery, sec.value);
+                      }
+                    }}
+                    className={`px-2.5 py-1 rounded-lg text-xs transition-all ${
+                      selectedSector === sec.value
+                        ? "bg-blue-600 text-white font-semibold"
+                        : "bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700/80"
+                    }`}
+                  >
+                    {sec.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </form>
         </div>
       )}
 
-      {/* Error Alert */}
+      {/* TAB 2: AI Product Spec Analyzer */}
+      {activeTab === "analyzer" && (
+        <div className="p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/60 shadow-xl space-y-6 backdrop-blur-sm">
+          <div className="space-y-2">
+            <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-blue-400" />
+              <span>Unstructured Product Specification Analyzer</span>
+            </h3>
+            <p className="text-xs text-slate-400">
+              Paste your raw manufacturing description, materials, or technical spec sheet. The assistant will parse attributes and identify the applicable Indian Standard and Quality Control Order.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <textarea
+              rows={4}
+              value={specText}
+              onChange={(e) => setSpecText(e.target.value)}
+              placeholder="e.g., We are a startup manufacturing stainless steel domestic pressure cookers of 3L and 5L capacity with fusible plugs for kitchen usage..."
+              className="w-full p-4 rounded-xl bg-slate-950/80 border border-slate-700 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+            />
+
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400">Sample Specs:</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {sampleSpecs.map((sample, sIdx) => (
+                    <button
+                      key={sIdx}
+                      type="button"
+                      onClick={() => setSpecText(sample.spec)}
+                      className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[11px] text-slate-300 hover:text-white transition-colors"
+                    >
+                      {sample.title}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleAnalyzeSpec}
+                disabled={isLoading || !specText.trim()}
+                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-md shadow-blue-600/30 flex items-center gap-2"
+              >
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                <span>Analyze Spec & Find Standard</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {isLoading && (
+        <div className="p-12 text-center space-y-3 rounded-2xl border border-slate-800 bg-slate-900/30">
+          <Loader2 className="w-8 h-8 text-blue-400 animate-spin mx-auto" />
+          <div className="text-sm font-semibold text-slate-200">
+            Searching 753 Standards & Gazette Quality Control Orders in Supabase...
+          </div>
+          <div className="text-xs text-slate-400">
+            Executing PostgreSQL Websearch Full-Text Search and pgvector match.
+          </div>
+        </div>
+      )}
+
+      {/* Error State */}
       {error && (
-        <div className="p-4 rounded-xl border border-red-500/30 bg-red-950/20 text-xs text-red-300 flex items-center gap-2.5">
-          <AlertCircle className="w-4 h-4 flex-shrink-0 text-red-400" />
+        <div className="p-4 rounded-xl border border-red-500/30 bg-red-950/20 text-red-300 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
-      {/* Results Section */}
-      {result && !isLoading && (
-        <div className="space-y-4">
+      {/* Results Display */}
+      {result && (
+        <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-blue-400" />
-              <h3 className="text-sm font-bold text-slate-200">
-                Evaluation Results
-              </h3>
-            </div>
-            <span className="text-xs text-slate-400 font-mono">
-              {result.standards.length} Potentially Relevant Standard(s)
+            <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+              <span>Matching Indian Standards Found</span>
+            </h2>
+            <span className="text-xs text-slate-400">
+              Retrieved from live Supabase knowledge base
             </span>
           </div>
 
-          <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/40 shadow-sm">
-            <StandardCard data={result} />
-          </div>
+          <StandardCard data={result} />
         </div>
       )}
     </div>

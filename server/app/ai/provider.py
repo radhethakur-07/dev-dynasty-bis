@@ -16,8 +16,6 @@ OUT_OF_SCOPE_KEYWORDS = [
     # Gaming & Entertainment
     "minecraft", "roblox", "fortnite", "gta", "play game", "gameplay", "cheat code",
     "poem", "poetry", "write a story", "lyrics", "song", "movie", "cinema", "actor", "joke",
-    # Cooking & Food Recipes (not appliances)
-    "recipe", "how to cook", "bake cake", "ingredient",
     # General non-BIS trivia & homework
     "capital of", "who won", "president of", "solve equation", "derivative", "integral",
     "weather today", "travel itinerary", "flight ticket"
@@ -98,6 +96,20 @@ def classify_query_intent(prompt: str, language: str = "en") -> IntentClassifica
             reasoning="Query asks for procedural certification pathways or licensing steps."
         )
 
+    # 5.5 QCO, Mandatory / Compulsory Status & Technical Regulations
+    if any(k in lower_query for k in [
+        "qco", "quality control order", "compulsory", "mandatory", "is this standard compulsory",
+        "is it compulsory", "mandatory certification", "under qco", "section 16", "section 29",
+        "penalty", "prohibition", "अनिवार्य", "बाध्यकारी"
+    ]):
+        return IntentClassification(
+            intent=IntentType.TECHNICAL_QUERY,
+            query=prompt,
+            language=language,  # type: ignore
+            confidence=0.95,
+            reasoning="Query inquires about Quality Control Orders (QCOs), compulsory certification, or statutory requirements."
+        )
+
     # 6. Consumer Queries
     if any(k in lower_query for k in ["complaint", "bis care app", "fake isi", "fraud", "consumer protection", "शिकायत"]):
         return IntentClassification(
@@ -135,11 +147,16 @@ class LLMProvider(ABC):
     ) -> Dict[str, Any]:
         pass
 
+    @abstractmethod
+    def synthesize_answer(self, prompt: str, context: str, language: str = "en") -> Optional[str]:
+        pass
+
 
 class GeminiProvider(LLMProvider):
     def __init__(self):
         self.api_key = settings.GEMINI_API_KEY
         self.model_name = settings.GEMINI_MODEL
+        self.fallback_model_name = getattr(settings, "GEMINI_FALLBACK_MODEL", "models/gemini-3.6-flash")
         self._initialized = False
 
         if self.api_key:
@@ -152,27 +169,41 @@ class GeminiProvider(LLMProvider):
             except Exception as exc:
                 logger.warning(f"Failed to initialize Gemini SDK: {exc}")
 
-    def generate_chat_response(
-        self, prompt: str, history: Optional[List[Dict[str, str]]] = None, tools: Optional[List[Dict[str, Any]]] = None
-    ) -> Dict[str, Any]:
-        # Always use the deterministic, rigorous intent classifier first!
-        intent_info = classify_query_intent(prompt)
-        if intent_info.intent == IntentType.UNSUPPORTED_OR_OUT_OF_SCOPE:
-            return {
-                "text": (
-                    "I am the Dev Dynasty BIS Intelligence Assistant, specifically designed to assist with Bureau of Indian "
-                    "Standards (BIS) regulations, Indian Standards (IS), conformity assessment schemes, hallmarking, and testing laboratories. "
-                    "Your request is outside this specialized domain."
-                ),
-                "tool_calls": [],
-                "is_out_of_scope": True,
-                "intent": intent_info.intent.value
-            }
+    def synthesize_answer(self, prompt: str, context: str, language: str = "en") -> Optional[str]:
+        """
+        Uses Gemini to generate a high-quality, authoritative, conversational response
+        strictly grounded on retrieved BIS facts and QCO gazette records.
+        """
+        if not self._initialized:
+            return None
 
-        return MockProvider().generate_chat_response(prompt, history, tools)
+        system_instruction = (
+            "You are the BIS Intelligence Assistant (SIH267107) created by Dev Dynasty for Smart India Hackathon. "
+            "You are an expert on Bureau of Indian Standards (BIS) regulations, Indian Standards (IS), conformity assessment schemes, "
+            "Quality Control Orders (QCOs), and testing laboratories. "
+            "Always be concise, accurate, professional, and authoritative. "
+            "Use the provided GROUNDED EVIDENCE to answer directly and definitively. "
+            "Do NOT invent standards, purity grades, or QCO dates. "
+            f"Respond in {'Hindi' if language == 'hi' else 'English'}."
+        )
 
+        full_prompt = (
+            f"{system_instruction}\n\n"
+            f"GROUNDED EVIDENCE:\n{context}\n\n"
+            f"USER QUERY:\n{prompt}\n\n"
+            "ANSWER:"
+        )
 
-class MockProvider(LLMProvider):
+        for m_name in [self.model_name, self.fallback_model_name]:
+            try:
+                m = self.genai.GenerativeModel(m_name)
+                res = m.generate_content(full_prompt, request_options={"timeout": 8.0})
+                if res and res.text:
+                    return res.text.strip()
+            except Exception as e:
+                logger.warning(f"Gemini model {m_name} failed/timed out ({e}), attempting fallback...")
+        return None
+
     def generate_chat_response(
         self, prompt: str, history: Optional[List[Dict[str, str]]] = None, tools: Optional[List[Dict[str, Any]]] = None
     ) -> Dict[str, Any]:
@@ -281,7 +312,51 @@ class MockProvider(LLMProvider):
         }
 
 
+class MockProvider(LLMProvider):
+    """Fallback provider when Gemini API key is unavailable. Provides deterministic tool routing only."""
+
+    def synthesize_answer(self, prompt: str, context: str, language: str = "en") -> Optional[str]:
+        return None
+
+    def generate_chat_response(
+        self, prompt: str, history: Optional[List[Dict[str, str]]] = None, tools: Optional[List[Dict[str, Any]]] = None
+    ) -> Dict[str, Any]:
+        intent_info = classify_query_intent(prompt)
+
+        if intent_info.intent == IntentType.UNSUPPORTED_OR_OUT_OF_SCOPE:
+            return {
+                "text": "I am the Dev Dynasty BIS Intelligence Assistant. Your request is outside the BIS domain.",
+                "tool_calls": [],
+                "is_out_of_scope": True,
+                "intent": intent_info.intent.value
+            }
+
+        # Map intent to tool call
+        intent_tool_map = {
+            IntentType.HALLMARKING: ("search_hallmarking_info", {"query": prompt}),
+            IntentType.TESTING_LABORATORY: ("find_testing_labs", {"product_or_test": prompt}),
+            IntentType.SCHEME_INFORMATION: ("get_scheme_information", {"scheme_name": prompt}),
+            IntentType.CERTIFICATION_GUIDANCE: ("get_certification_guidance", {"product": prompt}),
+            IntentType.CONSUMER_QUERY: ("search_bis_knowledge", {"query": prompt}),
+        }
+
+        if intent_info.intent in intent_tool_map:
+            tool_name, args = intent_tool_map[intent_info.intent]
+            return {
+                "text": f"Searching BIS knowledge base.",
+                "tool_calls": [{"name": tool_name, "arguments": args}],
+                "intent": intent_info.intent.value
+            }
+
+        return {
+            "text": "Searching Indian Standards.",
+            "tool_calls": [{"name": "search_bis_standards", "arguments": {"product": prompt, "query": prompt}}],
+            "intent": intent_info.intent.value
+        }
+
+
 def get_llm_provider() -> LLMProvider:
     if settings.is_gemini_configured:
         return GeminiProvider()
     return MockProvider()
+

@@ -1,15 +1,19 @@
-﻿import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { ChatMessage } from "@/types/api";
-import { ResponseDispatcher } from "../responses/ResponseDispatcher";
+import { AgentExecutionDrawer } from "./AgentExecutionDrawer";
+import { ResponseDispatcher } from "@/components/responses/ResponseDispatcher";
 import { ProcessingIndicator } from "./ProcessingIndicator";
-import { Bot, User, Copy, Check, ThumbsUp, ThumbsDown, ShieldCheck } from "lucide-react";
+import { Bot, User, Copy, Check, ThumbsUp, ThumbsDown, Sparkles } from "lucide-react";
 
 interface ChatAreaProps {
   messages: ChatMessage[];
   isLoading: boolean;
+  onQuickPrompt?: (prompt: string) => void;
 }
 
-export const ChatArea: React.FC<ChatAreaProps> = ({ messages, isLoading }) => {
+export const ChatArea: React.FC<ChatAreaProps> = ({ messages, isLoading, onQuickPrompt }) => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const [copiedId, setCopiedId] = React.useState<string | null>(null);
 
@@ -49,32 +53,35 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ messages, isLoading }) => {
 
             {/* Message Content Bubble */}
             <div
-              className={`flex-1 rounded-2xl p-4.5 border transition-all ${
+              className={`flex-1 rounded-2xl p-4.5 border transition-all overflow-hidden ${
                 isUser
                   ? "bg-blue-600/15 border-blue-500/30 text-slate-100 max-w-xl"
                   : "bg-slate-900/80 border-slate-800 text-slate-200 shadow-sm"
               }`}
             >
-              {/* Tool Badge if invoked */}
-              {!isUser && msg.toolCalled && (
-                <div className="flex items-center gap-1.5 mb-3 text-[11px] font-semibold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-0.5 rounded-full w-fit">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Executed Tool: {msg.toolCalled}</span>
+              {/* Agent Reasoning & Live Retrieval Trace */}
+              {!isUser && (msg.toolCalled || msg.processingStages?.length || msg.intent) && (
+                <AgentExecutionDrawer
+                  intent={msg.intent}
+                  toolCalled={msg.toolCalled}
+                  stages={msg.processingStages}
+                  structuredResponse={msg.structuredResponse}
+                  onQuickPrompt={onQuickPrompt}
+                />
+              )}
+
+              {/* Conversational Text Message */}
+              {msg.content && (
+                <div className="text-sm leading-relaxed mb-3 text-slate-200 prose prose-invert prose-sm max-w-none break-words overflow-wrap-anywhere">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                 </div>
               )}
 
-              {/* Processing stages if available */}
-              {!isUser && msg.processingStages && (
-                <ProcessingIndicator stages={msg.processingStages} />
-              )}
-
-              {/* User text or assistant structured response */}
-              {isUser ? (
-                <div className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</div>
-              ) : msg.structuredResponse ? (
-                <ResponseDispatcher response={msg.structuredResponse} />
-              ) : (
-                <div className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</div>
+              {/* Structured Interactive Component (Cards, Steps, Tables) */}
+              {!isUser && msg.structuredResponse && (
+                <div className="pt-1">
+                  <ResponseDispatcher response={msg.structuredResponse} />
+                </div>
               )}
 
               {/* Footer controls for assistant messages */}
@@ -86,18 +93,21 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ messages, isLoading }) => {
                       onClick={() => handleCopy(msg.id, msg.content || JSON.stringify(msg.structuredResponse))}
                       className="p-1.5 rounded-md hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
                       title="Copy response"
+                      aria-label="Copy response"
                     >
                       {copiedId === msg.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
                     <button
                       className="p-1.5 rounded-md hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
                       title="Helpful"
+                      aria-label="Mark as helpful"
                     >
                       <ThumbsUp className="w-3.5 h-3.5" />
                     </button>
                     <button
                       className="p-1.5 rounded-md hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
                       title="Not helpful"
+                      aria-label="Mark as not helpful"
                     >
                       <ThumbsDown className="w-3.5 h-3.5" />
                     </button>

@@ -166,6 +166,7 @@ export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content?: string;
+  intent?: string;
   structuredResponse?: FinalResponseUnion;
   processingStages?: ProcessingStage[];
   toolCalled?: string | null;

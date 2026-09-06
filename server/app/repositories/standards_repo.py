@@ -1,10 +1,9 @@
-﻿import json
+import json
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 from app.db.supabase import get_supabase_client
 from app.core.logging import logger
-from scripts.ingestion.sample_demo_data import DEMO_STANDARDS
 
 KNOWLEDGE_STORE_FILE = Path(__file__).resolve().parent.parent.parent / "data" / "knowledge_store.json"
 
@@ -14,7 +13,10 @@ STOPWORDS: Set[str] = {
     "requirements", "specification", "specifications", "please", "tell", "me", "which",
     "give", "code", "number", "product", "products", "find", "search", "show", "can", "you",
     "about", "how", "details", "info", "information", "does", "do", "any", "related", "like",
-    "under", "मानक", "है", "क्या", "के", "लिए", "बताओ", "लागू", "होने", "वाले", "बारे", "में"
+    "under", "quality", "control", "order", "qco", "compulsory", "mandatory", "voluntary",
+    "this", "that", "it", "its", "whether", "certification", "license", "licence", "procedure",
+    "process", "scheme", "schemes", "test", "testing", "lab", "laboratory",
+    "मानक", "है", "क्या", "के", "लिए", "बताओ", "लागू", "होने", "वाले", "बारे", "में", "अनिवार्य"
 }
 
 MIN_RELEVANCE_SCORE = 0.60
@@ -39,6 +41,9 @@ class StandardsRepository:
         tokens = []
         for w in raw_words:
             if w not in STOPWORDS and len(w) > 1:
+                # Ignore standard revision years (e.g. 1950-2030) from product keywords
+                if re.match(r"^(19|20)\d{2}$", w):
+                    continue
                 # Basic singularization for plural search queries (e.g. cookers -> cooker, toys -> toy)
                 normalized = w[:-1] if w.endswith("s") and len(w) > 3 and not w.endswith("ss") else w
                 tokens.append(normalized)
@@ -126,32 +131,78 @@ class StandardsRepository:
         # Consolidate rich product search context
         search_phrase = f"{product or ''} {category or ''} {material or ''} {intended_use or ''} {description or ''} {query}".strip()
         product_tokens = self._extract_product_tokens(f"{product or ''} {query}")
+        code_digits = re.findall(r"\d{3,5}", query)
+
+        # If query has no standard digits, no category, and no product tokens (e.g. conversational follow-ups), return early
+        if not product_tokens and not code_digits and not category:
+            return []
 
         candidates: List[Dict[str, Any]] = []
 
-        # 1. Fetch candidates from live Supabase if available
+        # 1. True database-side scalable search via Supabase (PostgreSQL WFTS + indexed matching)
         if self.supabase:
             try:
-                response = self.supabase.table("standards_metadata").select("*").limit(25).execute()
-                if response.data:
-                    # Merge each Supabase record with cached scope_summary/reason
-                    for row in response.data:
-                        code_key = row.get("code", "")
-                        local_match = self._local_cache.get(code_key, {})
-                        merged = dict(row)
-                        if "reason" not in merged or not merged["reason"]:
-                            merged["reason"] = local_match.get("reason", local_match.get("scope_summary", ""))
-                        candidates.append(merged)
+                db_candidates_map: Dict[str, Dict[str, Any]] = {}
+
+                # A. Direct standard number match if digits exist (e.g. 2347, 14543, 9873)
+                if code_digits:
+                    for dig in code_digits:
+                        res = self.supabase.table("standards_metadata").select("*").ilike("code", f"%{dig}%").limit(20).execute()
+                        if res.data:
+                            for r in res.data:
+                                db_candidates_map[r["code"]] = r
+
+                # B. PostgreSQL Websearch Full-Text Search (wfts) on title (only if no direct code match)
+                if not db_candidates_map and product_tokens:
+                    clean_search = " ".join(product_tokens)
+                    try:
+                        fts_res = self.supabase.table("standards_metadata").select("*").filter("title", "wfts", clean_search).limit(30).execute()
+                        if fts_res.data:
+                            for r in fts_res.data:
+                                db_candidates_map[r["code"]] = r
+                    except Exception as fts_err:
+                        logger.debug(f"WFTS query fallback: {fts_err}")
+
+                # C. Multi-column indexed token query across code, title, and category (only if still no candidates)
+                if not db_candidates_map and product_tokens:
+                    or_parts = []
+                    for t in product_tokens[:5]:
+                        or_parts.append(f"code.ilike.%{t}%")
+                        or_parts.append(f"title.ilike.%{t}%")
+                        or_parts.append(f"category.ilike.%{t}%")
+                    if or_parts:
+                        try:
+                            or_res = self.supabase.table("standards_metadata").select("*").or_(",".join(or_parts)).limit(40).execute()
+                            if or_res.data:
+                                for r in or_res.data:
+                                    db_candidates_map[r["code"]] = r
+                        except Exception as or_err:
+                            logger.debug(f"OR query fallback: {or_err}")
+
+                # D. Contextual category filter if explicitly specified
+                if category:
+                    try:
+                        cat_res = self.supabase.table("standards_metadata").select("*").ilike("category", f"%{category}%").limit(20).execute()
+                        if cat_res.data:
+                            for r in cat_res.data:
+                                db_candidates_map[r["code"]] = r
+                    except Exception as cat_err:
+                        logger.debug(f"Category query fallback: {cat_err}")
+
+                # Merge retrieved database rows with cached scope_summary/reason
+                for row in db_candidates_map.values():
+                    code_key = row.get("code", "")
+                    local_match = self._local_cache.get(code_key, {})
+                    merged = dict(row)
+                    if "reason" not in merged or not merged["reason"]:
+                        merged["reason"] = local_match.get("reason", local_match.get("scope_summary", ""))
+                    candidates.append(merged)
             except Exception as exc:
                 logger.warning(f"Error querying Supabase standards: {exc}.")
 
         # 2. Fallback to local verified store if Supabase returned nothing
         if not candidates and self._local_cache:
             candidates = list(self._local_cache.values())
-
-        # 3. Fallback to sample demo standards only if no candidate store exists
-        if not candidates:
-            candidates = DEMO_STANDARDS
 
         total_evaluated = len(candidates)
         scored_candidates = []

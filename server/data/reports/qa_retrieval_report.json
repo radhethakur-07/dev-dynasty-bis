@@ -1,0 +1,423 @@
+{
+  "total_queries": 52,
+  "passed": 49,
+  "success_rate_percent": 94.23076923076923,
+  "test_cases": [
+    {
+      "index": 1,
+      "query": "Packaged drinking water specification",
+      "category": "Food / Water",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 14543:2024 — Packaged Drinking Water (Other than Packaged Natur (Score: 0.95)"
+    },
+    {
+      "index": 2,
+      "query": "Drinking water potable requirements",
+      "category": "Food / Water",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 14543:2024 — Packaged Drinking Water (Other than Packaged Natur (Score: 0.65)"
+    },
+    {
+      "index": 3,
+      "query": "Milk powder and condensed milk standards",
+      "category": "Food",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 1165 — Milk-powder De-notified from compulsory BIS certif (Score: 0.85)"
+    },
+    {
+      "index": 4,
+      "query": "Infant milk substitutes nutrition standard",
+      "category": "Food",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 14433 — Infant milk substitutes De-notified from compulsor (Score: 0.85)"
+    },
+    {
+      "index": 5,
+      "query": "Ordinary Portland Cement specification",
+      "category": "Cement",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 269:2015 — Ordinary Portland Cement — Specification (Score: 0.95)"
+    },
+    {
+      "index": 6,
+      "query": "Portland Pozzolana Cement fly ash based",
+      "category": "Cement",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 1489 (Part 1) — Portland Pozzolana Cement-Part1 Fly-ash based (Score: 0.85)"
+    },
+    {
+      "index": 7,
+      "query": "Sulphate Resisting Portland Cement",
+      "category": "Cement",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 12330 — Sulphate Resisting Portland Cement (Score: 0.95)"
+    },
+    {
+      "index": 8,
+      "query": "High strength deformed steel bars and wires concrete reinforcement",
+      "category": "Steel",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 1786:2008 — High strength deformed steel bars and wires for co (Score: 0.85)"
+    },
+    {
+      "index": 9,
+      "query": "Structural steel standard for construction",
+      "category": "Steel",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 2830:2012 — Carbon steel cast billet ingots ,billets, blooms a (Score: 0.65)"
+    },
+    {
+      "index": 10,
+      "query": "Domestic pressure cookers safety and specification",
+      "category": "Household",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 2347:2023 — Domestic Pressure Cooker — Specification (Score: 0.85)"
+    },
+    {
+      "index": 11,
+      "query": "Household and similar electrical appliances safety",
+      "category": "Electrical",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 302 (Part 1):2024 — Household and Similar Electrical Appliances — Safe (Score: 0.85)"
+    },
+    {
+      "index": 12,
+      "query": "Plugs and socket outlets up to 250V",
+      "category": "Electrical",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 1293:2019 — Plugs and Socket-Outlets of Rated Voltage up to an (Score: 0.85)"
+    },
+    {
+      "index": 13,
+      "query": "Polyvinyl chloride PVC insulated cables up to 1100V",
+      "category": "Electrical",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 694:2010 — Polyvinyl Chloride Insulated Unsheathed and Sheath (Score: 0.85)"
+    },
+    {
+      "index": 14,
+      "query": "Electric food mixers household appliances",
+      "category": "Electrical",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 4250 — Domestic Electric Food Mixer (Liquidizers and Grin (Score: 0.85)"
+    },
+    {
+      "index": 15,
+      "query": "Laptop and notebook computers safety",
+      "category": "Electronics / CRS",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 13252 (Part 1):2010 — Information Technology Equipment — Safety Part 1:  (Score: 0.65)"
+    },
+    {
+      "index": 16,
+      "query": "Secondary lithium cells and batteries for portable applications",
+      "category": "Electronics / CRS",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 16046 (Part 2):2018 — Secondary Cells and Batteries Containing Alkaline  (Score: 0.85)"
+    },
+    {
+      "index": 17,
+      "query": "Audio video and ICT equipment safety requirements",
+      "category": "Electronics / CRS",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS/IEC 62368:Part 1:2023 — Electronic Games (Video) — Audio/Video, Informatio (Score: 0.85)"
+    },
+    {
+      "index": 18,
+      "query": "Information technology equipment safety general requirements",
+      "category": "Electronics / CRS",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 13252 (Part 1):2010 — Information Technology Equipment — Safety Part 1:  (Score: 0.85)"
+    },
+    {
+      "index": 19,
+      "query": "Safety requirements for toys mechanical physical properties",
+      "category": "Toys",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 9873 (Part 1):2012 — Safety Requirements for Toys — Part 1: Safety Aspe (Score: 0.85)"
+    },
+    {
+      "index": 20,
+      "query": "Safety of toys flammability requirements",
+      "category": "Toys",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 9873 (Part 2):2017 — Safety of Toys Part 2 Flammability. (Score: 0.85)"
+    },
+    {
+      "index": 21,
+      "query": "Electric toys safety requirements",
+      "category": "Toys",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 15644:2006 — Safety of Electric Toys. (Score: 0.85)"
+    },
+    {
+      "index": 22,
+      "query": "Polyester blend textiles compulsory standard",
+      "category": "Textiles",
+      "type": "standard",
+      "passed": false,
+      "details": "No standards returned"
+    },
+    {
+      "index": 23,
+      "query": "Protective helmets for two wheeler riders",
+      "category": "Automotive / Safety",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 4151:2015 — Helmet for riders of Two Wheeler Motor Vehicles (Score: 0.85)"
+    },
+    {
+      "index": 24,
+      "query": "Safety glass for motor vehicles automotive",
+      "category": "Automotive",
+      "type": "standard",
+      "passed": false,
+      "details": "Top was IS 13098, expected IS 2553"
+    },
+    {
+      "index": 25,
+      "query": "Bleaching powder specification",
+      "category": "Chemicals",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 1165 — Milk-powder De-notified from compulsory BIS certif (Score: 0.65)"
+    },
+    {
+      "index": 26,
+      "query": "Caustic soda pure and technical",
+      "category": "Chemicals",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 252:2013 — Caustic Soda -Specification (Score: 0.65)"
+    },
+    {
+      "index": 27,
+      "query": "LPG cylinders welded low carbon steel",
+      "category": "Mechanical / Gas",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 3196 (Part 1) — Welded low carbon steel gas cylinder exceeding 5 l (Score: 0.85)"
+    },
+    {
+      "index": 28,
+      "query": "Clinical electrical thermometers",
+      "category": "Medical Devices",
+      "type": "standard",
+      "passed": true,
+      "details": "Matched: IS 3055 (Part 1) — Clinical thermometers :Part1 Solid stem type (Score: 0.65)"
+    },
+    {
+      "index": 29,
+      "query": "Surgical rubber gloves sterile",
+      "category": "Medical Devices",
+      "type": "standard",
+      "passed": false,
+      "details": "No standards returned"
+    },
+    {
+      "index": 30,
+      "query": "Scheme I ISI mark certification process and requirements",
+      "category": "Scheme I",
+      "type": "scheme",
+      "passed": true,
+      "details": "Scheme: Scheme I — Product Certification (ISI Mark Scheme) (Sources: 4)"
+    },
+    {
+      "index": 31,
+      "query": "Compulsory Registration Scheme Scheme II CRS registration",
+      "category": "Scheme II",
+      "type": "scheme",
+      "passed": true,
+      "details": "Scheme: Scheme II — Compulsory Registration Scheme (CRS) (Sources: 4)"
+    },
+    {
+      "index": 32,
+      "query": "Certificate of Conformity Scheme IV batch testing",
+      "category": "Scheme IV",
+      "type": "scheme",
+      "passed": true,
+      "details": "Scheme: Scheme IV — Certificate of Conformity (CoC) (Sources: 4)"
+    },
+    {
+      "index": 33,
+      "query": "Scheme X industrial equipment certification machinery switchgear",
+      "category": "Scheme X",
+      "type": "scheme",
+      "passed": true,
+      "details": "Scheme: Scheme X — Industrial Equipment Certification (Sources: 4)"
+    },
+    {
+      "index": 34,
+      "query": "Foreign Manufacturers Certification Scheme FMCS licensing AIR",
+      "category": "FMCS",
+      "type": "scheme",
+      "passed": true,
+      "details": "Scheme: Foreign Manufacturers Certification Scheme (FMCS — Scheme I) (Sources: 4)"
+    },
+    {
+      "index": 35,
+      "query": "Management System Certification Scheme VI ISO 9001",
+      "category": "System Cert",
+      "type": "scheme",
+      "passed": true,
+      "details": "Scheme: Management System Certification (Scheme VI / ISO Equivalents) (Sources: 4)"
+    },
+    {
+      "index": 36,
+      "query": "Products covered under mandatory Quality Control Orders QCO",
+      "category": "QCO",
+      "type": "rag",
+      "passed": true,
+      "details": "Retrieved 3 grounded chunks from Supabase"
+    },
+    {
+      "index": 37,
+      "query": "Simplified procedure for grant of licence under Scheme I",
+      "category": "Certification",
+      "type": "rag",
+      "passed": true,
+      "details": "Retrieved 3 grounded chunks from Supabase"
+    },
+    {
+      "index": 38,
+      "query": "Scheme of Inspection and Testing SIT factory in-house lab",
+      "category": "Certification",
+      "type": "rag",
+      "passed": true,
+      "details": "Retrieved 3 grounded chunks from Supabase"
+    },
+    {
+      "index": 39,
+      "query": "Mandatory marks for gold hallmarking and HUID",
+      "category": "Hallmarking",
+      "type": "hallmarking",
+      "passed": true,
+      "details": "Found HUID in Gold (Sources: 4)"
+    },
+    {
+      "index": 40,
+      "query": "Gold purity grades 22K 18K 14K fineness",
+      "category": "Hallmarking",
+      "type": "hallmarking",
+      "passed": true,
+      "details": "Found 916 in Gold (Sources: 4)"
+    },
+    {
+      "index": 41,
+      "query": "Silver jewellery hallmarking grades IS 2112",
+      "category": "Hallmarking",
+      "type": "hallmarking",
+      "passed": true,
+      "details": "Found IS 2112 in Silver (IS 2112:2025) (Sources: 4)"
+    },
+    {
+      "index": 42,
+      "query": "Consumer verification of HUID on BIS Care App",
+      "category": "Hallmarking",
+      "type": "hallmarking",
+      "passed": true,
+      "details": "Found BIS Care in Gold (Sources: 4)"
+    },
+    {
+      "index": 43,
+      "query": "Testing of hallmarked jewellery at Assaying Centres fee",
+      "category": "Hallmarking",
+      "type": "hallmarking",
+      "passed": true,
+      "details": "Found Assaying in Gold (Sources: 4)"
+    },
+    {
+      "index": 44,
+      "query": "Food testing laboratory in Hyderabad",
+      "category": "Laboratories",
+      "type": "lab",
+      "passed": true,
+      "details": "Matched lab: Intertek India Private Limited (Food Services) in Hyderabad Telangana"
+    },
+    {
+      "index": 45,
+      "query": "Power electrical testing laboratory in Bengaluru",
+      "category": "Laboratories",
+      "type": "lab",
+      "passed": true,
+      "details": "Matched lab: Central Power Research Institute (CPRI) in Bengaluru Karnataka"
+    },
+    {
+      "index": 46,
+      "query": "Industrial research testing laboratory in Delhi SIIR",
+      "category": "Laboratories",
+      "type": "lab",
+      "passed": true,
+      "details": "Matched lab: SIIR, Delhi Shriram Institute For Industrial Research in North Delhi"
+    },
+    {
+      "index": 47,
+      "query": "Recognized laboratory in Noida Uttar Pradesh Testtex",
+      "category": "Laboratories",
+      "type": "lab",
+      "passed": true,
+      "details": "Matched lab: Testtex India Laboratories Private Limited in Noida Uttar Pradesh"
+    },
+    {
+      "index": 48,
+      "query": "National Test House NTH Ghaziabad testing laboratory",
+      "category": "Laboratories",
+      "type": "lab",
+      "passed": true,
+      "details": "Matched lab: National Test House (NTH) in Ghaziabad Uttar Pradesh"
+    },
+    {
+      "index": 49,
+      "query": "Teach me Python programming language from scratch",
+      "category": "Negative",
+      "type": "intent",
+      "passed": true,
+      "details": "Correctly classified as IntentType.UNSUPPORTED_OR_OUT_OF_SCOPE"
+    },
+    {
+      "index": 50,
+      "query": "How to make Italian pizza at home with cheese",
+      "category": "Negative",
+      "type": "intent",
+      "passed": true,
+      "details": "Correctly classified as IntentType.UNSUPPORTED_OR_OUT_OF_SCOPE"
+    },
+    {
+      "index": 51,
+      "query": "Explain quantum gravity and warp drive propulsion theory",
+      "category": "Negative",
+      "type": "intent",
+      "passed": true,
+      "details": "Correctly classified as IntentType.UNSUPPORTED_OR_OUT_OF_SCOPE"
+    },
+    {
+      "index": 52,
+      "query": "Stock price prediction for Reliance Industries",
+      "category": "Negative",
+      "type": "intent",
+      "passed": true,
+      "details": "Correctly classified as IntentType.UNSUPPORTED_OR_OUT_OF_SCOPE"
+    }
+  ]
+}

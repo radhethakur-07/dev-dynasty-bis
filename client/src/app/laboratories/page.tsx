@@ -1,261 +1,257 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
-import { searchLaboratories } from "@/lib/api";
-import { LaboratoryResultsResponse, Language } from "@/types/api";
+import React, { useState } from "react";
+import { findTestingLaboratories } from "@/lib/api";
+import { LaboratoryResultsResponse, Language, LaboratoryItem } from "@/types/api";
 import { LaboratoryTable } from "@/components/responses/LaboratoryTable";
-import { FlaskConical, Search, Loader2, MapPin, Globe, RefreshCw, Sparkles, AlertCircle } from "lucide-react";
+import { 
+  FlaskConical, 
+  Search, 
+  MapPin, 
+  Building2, 
+  Phone, 
+  Mail, 
+  ExternalLink, 
+  Loader2, 
+  Filter, 
+  CheckCircle2, 
+  AlertCircle,
+  Calendar,
+  Sparkles
+} from "lucide-react";
 
 export default function LaboratoriesPage() {
-  const [productOrTest, setProductOrTest] = useState("");
-  const [location, setLocation] = useState("");
+  const [productOrTest, setProductOrTest] = useState("Food");
+  const [location, setLocation] = useState("Hyderabad");
+  const [selectedDiscipline, setSelectedDiscipline] = useState("");
   const [language, setLanguage] = useState<Language>("en");
   const [isLoading, setIsLoading] = useState(false);
-  const [labData, setLabData] = useState<LaboratoryResultsResponse | null>(null);
+  const [results, setResults] = useState<LaboratoryResultsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchLabs = useCallback(async (prod: string, loc: string, lang: Language) => {
+  const indianStates = [
+    { label: "All States / Union Territories", value: "" },
+    { label: "Delhi (NCR)", value: "Delhi" },
+    { label: "Maharashtra", value: "Maharashtra" },
+    { label: "Telangana", value: "Telangana" },
+    { label: "Karnataka", value: "Karnataka" },
+    { label: "Tamil Nadu", value: "Tamil Nadu" },
+    { label: "Uttar Pradesh", value: "Uttar Pradesh" },
+    { label: "Gujarat", value: "Gujarat" },
+    { label: "Haryana", value: "Haryana" },
+    { label: "West Bengal", value: "West Bengal" },
+    { label: "Rajasthan", value: "Rajasthan" },
+    { label: "Kerala", value: "Kerala" },
+    { label: "Madhya Pradesh", value: "Madhya Pradesh" },
+    { label: "Punjab", value: "Punjab" },
+    { label: "Andhra Pradesh", value: "Andhra Pradesh" }
+  ];
+
+  const disciplines = [
+    { label: "All Disciplines", value: "" },
+    { label: "Food & Beverages", value: "Food" },
+    { label: "Electrical & Electronics", value: "Electrical" },
+    { label: "Cement & Construction", value: "Cement" },
+    { label: "Chemical & Materials", value: "Chemical" },
+    { label: "Mechanical & Steel", value: "Mechanical" },
+    { label: "Power & Energy", value: "Power" },
+    { label: "Textiles", value: "Testing" }
+  ];
+
+  const presets = [
+    { prod: "Food", loc: "Hyderabad", label: "Food Testing in Hyderabad (Intertek)" },
+    { prod: "Power", loc: "Bengaluru", label: "Power & Electrical in Bengaluru (CPRI)" },
+    { prod: "Industrial", loc: "Delhi", label: "Industrial Research in Delhi (SIIR)" },
+    { prod: "Testing", loc: "Noida", label: "Textiles & Materials in Noida (Testtex)" },
+    { prod: "Cement", loc: "Hyderabad", label: "Cement Testing in Hyderabad (NCCBM)" },
+    { prod: "National", loc: "Ghaziabad", label: "National Test House (NTH Ghaziabad)" }
+  ];
+
+  const handleSearch = async (prodOverride?: string, locOverride?: string) => {
+    const prod = prodOverride !== undefined ? prodOverride : productOrTest;
+    const loc = locOverride !== undefined ? locOverride : location;
+
     if (!prod.trim() && !loc.trim()) return;
+
     setIsLoading(true);
     setError(null);
+    setResults(null);
+
     try {
-      const data = await searchLaboratories(prod.trim(), loc.trim() || undefined, lang);
-      setLabData(data);
+      const data = await findTestingLaboratories({
+        product_or_test: prod.trim() || undefined,
+        location: loc.trim() || undefined,
+        language
+      });
+      setResults(data);
     } catch (err: any) {
-      setError(err.message || "Failed to search testing laboratories.");
+      setError(err.message || "Failed to search BIS testing laboratories.");
     } finally {
       setIsLoading(false);
     }
-  }, []);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!productOrTest.trim() && !location.trim()) return;
-    fetchLabs(productOrTest, location, language);
   };
-
-  const handleReset = () => {
-    setProductOrTest("");
-    setLocation("");
-    setLabData(null);
-    setError(null);
-  };
-
-  const samplePresets = [
-    { label: "Food Services (Hyderabad)", prod: "Food", loc: "Hyderabad" },
-    { label: "Power & Electrical (Bengaluru)", prod: "Power Electrical", loc: "Bengaluru" },
-    { label: "NTH Test House (Ghaziabad)", prod: "National Test House", loc: "Ghaziabad" },
-    { label: "Delhi NCR Labs", prod: "Testing", loc: "Delhi" }
-  ];
 
   return (
-    <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+      {/* Title & Introduction */}
       <div className="space-y-2">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold">
           <FlaskConical className="w-3.5 h-3.5" />
-          <span>Testing Infrastructure & Laboratory Directory</span>
+          <span>BIS LIMS Testing Laboratory Directory • 437 Recognized Labs</span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100">
-          Recognized Testing Laboratories
+          BIS Recognized Testing Laboratories Directory
         </h1>
-        <p className="text-sm text-slate-400 max-w-2xl">
-          Search BIS Central, Regional, and recognized third-party testing laboratories across India by product test scope and location.
+        <p className="text-sm text-slate-400 max-w-3xl">
+          Search across 437 testing facilities officially recognized under the BIS Laboratory Information Management System (LIMS). Filter by state, testing discipline, or facility name.
         </p>
       </div>
 
-      {/* Filter Form */}
-      <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/60 shadow-xl space-y-4">
-        <form onSubmit={handleSearch} className="space-y-4">
+      {/* Search Filter Card */}
+      <div className="p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/60 shadow-xl space-y-6 backdrop-blur-sm">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSearch();
+          }}
+          className="space-y-5"
+        >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">
-                Product or Testing Discipline
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                Product, Material, or Test Discipline
               </label>
-              <input
-                type="text"
-                value={productOrTest}
-                onChange={(e) => setProductOrTest(e.target.value)}
-                placeholder="e.g. Food, Power, Cookware, Cement, Electrical..."
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"
-              />
+              <div className="relative">
+                <FlaskConical className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={productOrTest}
+                  onChange={(e) => setProductOrTest(e.target.value)}
+                  placeholder="e.g., Food, Cement, Electrical, Cable, Pressure Cooker..."
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                />
+              </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">
-                City / State (Optional)
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                Location (City or State)
               </label>
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="e.g. Mumbai, Delhi, Hyderabad, Bengaluru..."
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"
-              />
+              <div className="relative">
+                <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="e.g., Hyderabad, Bengaluru, Delhi, Noida, Mumbai..."
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                />
+              </div>
             </div>
           </div>
 
-          {/* Quick Presets */}
-          <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-            <span className="text-slate-500 font-medium">Quick filters:</span>
-            {samplePresets.map((preset, idx) => (
+          {/* Filter Pills */}
+          <div className="flex items-center justify-between flex-wrap gap-4 pt-2">
+            <div className="space-y-1.5">
+              <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                <Filter className="w-3 h-3 text-blue-400" />
+                Quick Discipline Filters:
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {disciplines.map((d, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setSelectedDiscipline(d.value);
+                      setProductOrTest(d.value);
+                      handleSearch(d.value, location);
+                    }}
+                    className={`px-2.5 py-1 rounded-lg text-xs transition-all ${
+                      selectedDiscipline === d.value
+                        ? "bg-blue-600 text-white font-semibold"
+                        : "bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700/80"
+                    }`}
+                  >
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading || (!productOrTest.trim() && !location.trim())}
+              className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-md shadow-blue-600/30 flex items-center gap-2 self-end"
+            >
+              {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+              <span>Find Laboratories</span>
+            </button>
+          </div>
+        </form>
+
+        {/* Preset Queries */}
+        <div className="pt-4 border-t border-slate-800/80 space-y-2">
+          <div className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">
+            Verified LIMS Search Scenarios:
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {presets.map((p, pIdx) => (
               <button
-                key={idx}
+                key={pIdx}
                 type="button"
                 onClick={() => {
-                  setProductOrTest(preset.prod);
-                  setLocation(preset.loc);
-                  fetchLabs(preset.prod, preset.loc, language);
+                  setProductOrTest(p.prod);
+                  setLocation(p.loc);
+                  handleSearch(p.prod, p.loc);
                 }}
-                className="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 text-[11px] transition-colors"
+                className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 text-[11px] text-slate-300 hover:text-blue-300 transition-colors flex items-center gap-1.5"
               >
-                {preset.label}
+                <Sparkles className="w-3 h-3 text-blue-400" />
+                <span>{p.label}</span>
               </button>
             ))}
           </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800/80">
-            <button
-              type="button"
-              onClick={() => {
-                const nextLang = language === "en" ? "hi" : "en";
-                setLanguage(nextLang);
-                if (productOrTest.trim() || location.trim()) {
-                  fetchLabs(productOrTest, location, nextLang);
-                }
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs font-semibold"
-            >
-              <Globe className="w-3.5 h-3.5 text-blue-400" />
-              <span>{language === "en" ? "English" : "हिन्दी"}</span>
-            </button>
-
-            <div className="flex items-center gap-2">
-              {labData && (
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  <span>Reset</span>
-                </button>
-              )}
-
-              <button
-                type="submit"
-                disabled={isLoading || (!productOrTest.trim() && !location.trim())}
-                className="inline-flex items-center gap-2 px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold disabled:opacity-50 transition-all shadow-md shadow-blue-600/20"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Searching Laboratories...</span>
-                  </>
-                ) : (
-                  <>
-                    <Search className="w-4 h-4" />
-                    <span>Search Laboratories</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </form>
+        </div>
       </div>
 
-      {error && (
-        <div className="p-4 rounded-xl border border-red-500/30 bg-red-950/20 text-xs text-red-300">
-          {error}
-        </div>
-      )}
-
-      {/* Active Loading State */}
+      {/* Loading State */}
       {isLoading && (
-        <div className="p-8 rounded-2xl border border-blue-500/30 bg-slate-900/40 text-center space-y-3">
+        <div className="p-12 text-center space-y-3 rounded-2xl border border-slate-800 bg-slate-900/30">
           <Loader2 className="w-8 h-8 text-blue-400 animate-spin mx-auto" />
-          <div className="space-y-1">
-            <h4 className="text-sm font-semibold text-slate-200">
-              Searching BIS LIMS recognized laboratories...
-            </h4>
-            <p className="text-xs text-slate-400">
-              Filtering testing facility scopes and geographical locations.
-            </p>
+          <div className="text-sm font-semibold text-slate-200">
+            Searching 437 Recognized Testing Facilities in Supabase LIMS Database...
+          </div>
+          <div className="text-xs text-slate-400">
+            Filtering by location, discipline scope, and official recognition status.
           </div>
         </div>
       )}
 
-      {/* Results View */}
-      {!isLoading && labData && (
-        <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/40 shadow-xl space-y-4">
-          <LaboratoryTable data={labData} />
+      {/* Error State */}
+      {error && (
+        <div className="p-4 rounded-xl border border-red-500/30 bg-red-950/20 text-red-300 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span>{error}</span>
         </div>
       )}
 
-      {/* Clean Empty State: Visible on initial load */}
-      {!isLoading && !labData && (
-        <div className="p-8 rounded-2xl border border-dashed border-slate-800 bg-slate-900/20 text-center space-y-6">
-          <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto text-blue-400">
-            <FlaskConical className="w-6 h-6" />
+      {/* Results Display */}
+      {results && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+              <span>Recognized Testing Laboratories</span>
+            </h2>
+            <span className="text-xs text-slate-400">
+              Official BIS LIMS Accreditation Directory
+            </span>
           </div>
 
-          <div className="space-y-1.5 max-w-md mx-auto">
-            <h3 className="text-base font-bold text-slate-100">
-              Search BIS Recognized Laboratories
-            </h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              No results preloaded. Enter a product type (e.g. &quot;Food&quot;, &quot;Power&quot;, &quot;Electrical&quot;) or select a city/state above to retrieve verified testing facilities from the BIS LIMS directory.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left max-w-3xl mx-auto pt-2">
-            <div
-              onClick={() => {
-                setProductOrTest("Food");
-                setLocation("Hyderabad");
-                fetchLabs("Food", "Hyderabad", language);
-              }}
-              className="p-4 rounded-xl border border-slate-800/80 bg-slate-900/40 hover:bg-slate-900 hover:border-blue-500/40 transition-all cursor-pointer space-y-1"
-            >
-              <div className="text-xs font-bold text-slate-200">Food Services Testing</div>
-              <div className="text-[11px] text-blue-400 font-medium">Intertek • Hyderabad</div>
-              <p className="text-[10px] text-slate-400">
-                Recognized under BIS LIMS for food products and packaged water testing.
-              </p>
-            </div>
-
-            <div
-              onClick={() => {
-                setProductOrTest("Power Electrical");
-                setLocation("Bengaluru");
-                fetchLabs("Power Electrical", "Bengaluru", language);
-              }}
-              className="p-4 rounded-xl border border-slate-800/80 bg-slate-900/40 hover:bg-slate-900 hover:border-blue-500/40 transition-all cursor-pointer space-y-1"
-            >
-              <div className="text-xs font-bold text-slate-200">Power & High Voltage</div>
-              <div className="text-[11px] text-blue-400 font-medium">CPRI • Bengaluru</div>
-              <p className="text-[10px] text-slate-400">
-                Premier institute for power research, transformers, switchgear, and cables.
-              </p>
-            </div>
-
-            <div
-              onClick={() => {
-                setProductOrTest("Testing");
-                setLocation("Delhi");
-                fetchLabs("Testing", "Delhi", language);
-              }}
-              className="p-4 rounded-xl border border-slate-800/80 bg-slate-900/40 hover:bg-slate-900 hover:border-blue-500/40 transition-all cursor-pointer space-y-1"
-            >
-              <div className="text-xs font-bold text-slate-200">Industrial Research</div>
-              <div className="text-[11px] text-blue-400 font-medium">SIIR • Delhi</div>
-              <p className="text-[10px] text-slate-400">
-                Specialized in chemical, mechanical, and materials testing under BIS LIMS.
-              </p>
-            </div>
-          </div>
+          <LaboratoryTable data={results} />
         </div>
       )}
     </div>
   );
 }
-

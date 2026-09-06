@@ -51,11 +51,11 @@ class LaboratoryRepository:
                     # Post-query verification to ensure both criteria are respected
                     matched_db = []
                     for row in response.data:
-                        row_name = row.get("name", "").lower()
-                        row_scope = row.get("scope_of_testing", "").lower()
-                        row_cats = [c.lower() for c in (row.get("categories") or [])]
-                        row_loc = row.get("location", "").lower()
-                        row_state = row.get("state", "").lower()
+                        row_name = (row.get("name") or "").lower()
+                        row_scope = (row.get("scope_of_testing") or "").lower()
+                        row_cats = [c.lower() for c in (row.get("categories") or []) if c]
+                        row_loc = (row.get("location") or "").lower()
+                        row_state = (row.get("state") or "").lower()
 
                         loc_ok = not loc_term or (loc_term in row_loc or loc_term in row_state)
                         prod_ok = not search_terms or any(
@@ -81,11 +81,11 @@ class LaboratoryRepository:
                     ingested_labs = store.get("laboratories", [])
                     matched_local = []
                     for lab in ingested_labs:
-                        lab_name = lab.get("name", "").lower()
-                        lab_scope = lab.get("scope_of_testing", "").lower()
-                        lab_cats = [c.lower() for c in (lab.get("categories") or [])]
-                        lab_loc = lab.get("location", "").lower()
-                        lab_state = lab.get("state", "").lower()
+                        lab_name = (lab.get("name") or "").lower()
+                        lab_scope = (lab.get("scope_of_testing") or "").lower()
+                        lab_cats = [c.lower() for c in (lab.get("categories") or []) if c]
+                        lab_loc = (lab.get("location") or "").lower()
+                        lab_state = (lab.get("state") or "").lower()
 
                         loc_ok = not loc_term or (loc_term in lab_loc or loc_term in lab_state)
                         prod_ok = not search_terms or any(

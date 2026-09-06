@@ -1,5 +1,5 @@
-﻿from typing import Optional
-from supabase import create_client, Client
+from typing import Optional
+from supabase import create_client, Client, ClientOptions
 from app.core.config import settings
 from app.core.logging import logger
 
@@ -18,9 +18,11 @@ def get_supabase_client() -> Optional[Client]:
 
     if settings.is_supabase_configured:
         try:
+            options = ClientOptions(postgrest_client_timeout=6.0)
             _supabase_client = create_client(
                 settings.SUPABASE_URL,
-                settings.SUPABASE_SERVICE_ROLE_KEY or settings.SUPABASE_ANON_KEY
+                settings.SUPABASE_SERVICE_ROLE_KEY or settings.SUPABASE_ANON_KEY,
+                options=options
             )
             logger.info("Supabase client initialized successfully.")
             return _supabase_client

@@ -1,4 +1,4 @@
-﻿from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from app.repositories.knowledge_repo import knowledge_repo
 from app.schemas.responses import SourceCitation
 from app.core.config import settings
@@ -31,7 +31,7 @@ class RAGService:
         return [0.01 * ((i % 10) + 1) for i in range(dim)]
 
     def retrieve_context(
-        self, query: str, match_count: int = 4
+        self, query: str, match_count: int = 6
     ) -> List[Dict[str, Any]]:
         """
         Retrieves top relevant knowledge chunks and returns them with structured source citations.

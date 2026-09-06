@@ -1,4 +1,4 @@
-﻿# Dev Dynasty — BIS Intelligence Assistant (SIH267107)
+# Dev Dynasty — BIS Intelligence Assistant (SIH267107)
 
 > **Smart India Hackathon** | Problem Statement: **SIH267107**  
 > AI-Powered Intelligent Assistant for Indian Standards and Bureau of Indian Standards (BIS) Services.
@@ -100,7 +100,54 @@ Open `http://localhost:3000` in your browser.
 - **Zero Arbitrary Execution**: Neither the user nor the LLM can trigger raw database execution.
 - **Strict Allowlist**: Only predefined tools (`search_bis_standards`, `get_certification_guidance`, `get_scheme_information`, `search_hallmarking_info`, `find_testing_labs`, `search_bis_knowledge`) can be called.
 - **Isolated Ingestion**: The data ingestion pipeline is decoupled from runtime chat.
-- **Sample Data Transparency**: Any non-official seed data used for local validation is explicitly flagged as `"Demo / Sample / Not official"`.
+- **JWT Authentication**: All chat and session endpoints are protected with JWT tokens.
+- **Sample Data Transparency**: Any non-official seed data is flagged as `"Demo / Sample / Not official"`.
+
+---
+
+## 🔑 Authentication
+The system uses email-based authentication with JWT tokens.
+
+### Demo Credentials
+- **Email**: `demo@devdynasty.bis`
+- **Password**: `BISDemo2024!`
+
+### Email Verification (Brevo)
+Set `BREVO_API_KEY` in your `.env` to enable email verification. Without it, the system works in demo mode (OTP shown in server logs).
+
+---
+
+## 🚀 Deployment
+
+### Backend → Render
+1. Push code to GitHub
+2. Create a new Web Service on [Render](https://render.com)
+3. Root directory: `server`
+4. Build command: `pip install -r requirements.txt`
+5. Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+6. Set environment variables: `GEMINI_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET`, `CLIENT_URL`
+
+### Frontend → Vercel
+1. Import the GitHub repo on [Vercel](https://vercel.com)
+2. Root directory: `client`
+3. Framework: Next.js (auto-detected)
+4. Set environment variable: `NEXT_PUBLIC_API_URL=https://your-backend.onrender.com`
+
+### Database Setup
+1. Go to [Supabase SQL Editor](https://supabase.com/dashboard)
+2. Run `server/scripts/ingestion/schema.sql` to create all tables
+3. Run `server/scripts/ingestion/setup_users_table.sql` to create the users table
+
+---
+
+## 📊 Data Counts
+| Data | Count |
+|------|-------|
+| Standards | 753 |
+| Laboratories | 437 |
+| Knowledge Documents | 28 |
+| Knowledge Chunks (embedded) | 378 |
+| Embedding Model | gemini-embedding-001 (768-dim) |
 
 ---
 

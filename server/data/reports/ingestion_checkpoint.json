@@ -1,0 +1,38 @@
+{
+  "completed_stages": [
+    "standards",
+    "laboratories"
+  ],
+  "processed_chunks": 0,
+  "completed_doc_ids": [
+    "Bis Care Consumer",
+    "Certification Faq",
+    "Certification Schemes",
+    "Consumer Faqs",
+    "Fmcs Faq",
+    "Hallmarking Gold Huid",
+    "Hallmarking Guide",
+    "Hallmarking Silver",
+    "Scheme Ii Crs",
+    "Scheme Iv Coc",
+    "Scheme X Faq",
+    "System Certification",
+    "Scheme I Compulsory Standards Registry",
+    "BIS LIMS Regional Testing Directory",
+    "10 Bis Act 2016 Statutory Framework",
+    "11 Fssai Bis Mandatory Food Safety",
+    "12 Electrical Appliances Standards",
+    "13 Food Safety Standards",
+    "14 Electronics Crs Standards",
+    "15 Textiles Standards",
+    "16 Chemicals Standards",
+    "17 Automotive Standards",
+    "18 Medical Devices Standards",
+    "19 Household Products Standards",
+    "20 Mechanical Industrial Standards",
+    "21 Construction Building Standards",
+    "22 Bis General Information"
+  ],
+  "quota_exhausted": false,
+  "failed_docs": []
+}
