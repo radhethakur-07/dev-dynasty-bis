@@ -1,10 +1,11 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Shield, Sparkles, Activity, Menu, X, BookOpen, Award, CheckCircle, FlaskConical, Info } from "lucide-react";
 import { checkBackendHealth } from "@/lib/api";
+import { ThemeToggle } from "@/components/common/ThemeToggle";
 
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
@@ -75,9 +76,10 @@ export const Navbar: React.FC = () => {
           })}
         </nav>
 
-        {/* Status Indicator */}
-        <div className="hidden lg:flex items-center gap-2 text-xs">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-slate-400 text-[11px]">
+        {/* Right Section: Status Indicator & Theme Toggle */}
+        <div className="flex items-center gap-2">
+          {/* Status Indicator */}
+          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-slate-400 text-[11px]">
             <span
               className={`w-2 h-2 rounded-full ${
                 backendStatus === "online"
@@ -95,15 +97,18 @@ export const Navbar: React.FC = () => {
                 : "Controlled Mode"}
             </span>
           </div>
-        </div>
 
-        {/* Mobile menu button */}
-        <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900"
-        >
-          {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+          {/* Theme Toggle Button */}
+          <ThemeToggle />
+
+          {/* Mobile menu button */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900"
+          >
+            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Navigation Drawer */}
