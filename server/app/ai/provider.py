@@ -171,38 +171,48 @@ class GeminiProvider(LLMProvider):
 
     def synthesize_answer(self, prompt: str, context: str, language: str = "en") -> Optional[str]:
         """
-        Uses Gemini to generate a high-quality, authoritative, conversational response
-        strictly grounded on retrieved BIS facts and QCO gazette records.
+        Uses Gemini to generate a high-quality, authoritative response.
+        If context is USE_GENERAL_KNOWLEDGE, Gemini uses its own BIS knowledge.
         """
         if not self._initialized:
             return None
 
-        system_instruction = (
-            "You are the BIS Intelligence Assistant (SIH267107) created by Dev Dynasty for Smart India Hackathon. "
-            "You are an expert on Bureau of Indian Standards (BIS) regulations, Indian Standards (IS), conformity assessment schemes, "
-            "Quality Control Orders (QCOs), and testing laboratories. "
-            "Always be concise, accurate, professional, and authoritative. "
-            "Use the provided GROUNDED EVIDENCE to answer directly and definitively. "
-            "Do NOT invent standards, purity grades, or QCO dates. "
-            f"Respond in {'Hindi' if language == 'hi' else 'English'}."
-        )
+        lang_instruction = "Respond in Hindi." if language == "hi" else "Respond in English."
+        use_general = context.strip() == "USE_GENERAL_KNOWLEDGE"
 
-        full_prompt = (
-            f"{system_instruction}\n\n"
-            f"GROUNDED EVIDENCE:\n{context}\n\n"
-            f"USER QUERY:\n{prompt}\n\n"
-            "ANSWER:"
-        )
+        if use_general:
+            full_prompt = (
+                f"You are the BIS Intelligence Assistant by Dev Dynasty (SIH267107), an expert on Bureau of Indian Standards (BIS). "
+                f"Answer the following question using your knowledge of BIS regulations, Indian Standards (IS codes), "
+                f"QCOs, certification schemes, hallmarking, testing labs, and BIS Act 2016. "
+                f"Be specific, helpful, and authoritative. Never say you don't have information — provide the best answer you can. "
+                f"If relevant, mention IS codes, QCO notifications, or official BIS procedures. "
+                f"{lang_instruction}\n\n"
+                f"USER QUESTION: {prompt}\n\n"
+                f"ANSWER:"
+            )
+        else:
+            full_prompt = (
+                f"You are the BIS Intelligence Assistant by Dev Dynasty (SIH267107), an expert on Bureau of Indian Standards (BIS). "
+                f"Use the following retrieved evidence to answer the user's question precisely and helpfully. "
+                f"Present the answer clearly — do NOT repeat the same information twice. "
+                f"Do NOT say 'I haven't found information' — instead use the evidence provided. "
+                f"{lang_instruction}\n\n"
+                f"RETRIEVED EVIDENCE:\n{context}\n\n"
+                f"USER QUESTION: {prompt}\n\n"
+                f"ANSWER (based strictly on the evidence above):"
+            )
 
         for m_name in [self.model_name, self.fallback_model_name]:
             try:
                 m = self.genai.GenerativeModel(m_name)
-                res = m.generate_content(full_prompt, request_options={"timeout": 8.0})
+                res = m.generate_content(full_prompt, request_options={"timeout": 10.0})
                 if res and res.text:
                     return res.text.strip()
             except Exception as e:
-                logger.warning(f"Gemini model {m_name} failed/timed out ({e}), attempting fallback...")
+                logger.warning(f"Gemini model {m_name} failed ({e}), trying fallback...")
         return None
+
 
     def generate_chat_response(
         self, prompt: str, history: Optional[List[Dict[str, str]]] = None, tools: Optional[List[Dict[str, Any]]] = None

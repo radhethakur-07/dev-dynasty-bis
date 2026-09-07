@@ -1,3 +1,7 @@
+"""
+AI Orchestrator — Production-grade BIS Intelligence Assistant
+Handles intent routing, tool execution, and Gemini synthesis.
+"""
 import re
 import uuid
 from typing import Any, Dict, List, Optional
@@ -10,7 +14,7 @@ from app.schemas.responses import TextResponse, FinalResponseUnion, SourceCitati
 from app.tools.registry import tool_registry
 from app.repositories.standards_repo import standards_repo
 
-# Strict mapping enforcing tool routing integrity (Bug 4)
+# Strict mapping enforcing tool routing integrity
 INTENT_TO_ALLOWED_TOOLS: Dict[IntentType, List[str]] = {
     IntentType.FIND_STANDARD: ["search_bis_standards"],
     IntentType.CERTIFICATION_GUIDANCE: ["get_certification_guidance", "get_scheme_information"],
@@ -20,15 +24,11 @@ INTENT_TO_ALLOWED_TOOLS: Dict[IntentType, List[str]] = {
     IntentType.CONSUMER_QUERY: ["search_bis_knowledge"],
     IntentType.RELATED_STANDARD_SEARCH: ["search_bis_standards"],
     IntentType.TECHNICAL_QUERY: ["search_bis_knowledge"],
-    IntentType.UNSUPPORTED_OR_OUT_OF_SCOPE: [],  # Strictly NO tools permitted!
+    IntentType.UNSUPPORTED_OR_OUT_OF_SCOPE: [],
 }
 
 
 def extract_context_from_history(history: List[Any]) -> Dict[str, Optional[str]]:
-    """
-    Extracts the most recent standard code (e.g. IS 14543, IS 2347)
-    and product mentions from previous chat history turns.
-    """
     context: Dict[str, Optional[str]] = {"standard_code": None, "product": None}
     if not history:
         return context
@@ -64,222 +64,138 @@ class AIOrchestrator:
     def __init__(self):
         self.llm = get_llm_provider()
 
+    def _build_final_response(self, tool_result: FinalResponseUnion, synthesis: Optional[str]) -> FinalResponseUnion:
+        """
+        Replace tool_result content with Gemini synthesis.
+        NEVER append synthesis on top of existing content — replace it.
+        """
+        if not synthesis:
+            return tool_result
+
+        result_type = type(tool_result).__name__
+
+        if result_type == "TextResponse":
+            tool_result.content = synthesis
+        elif result_type == "HallmarkingResponse":
+            tool_result.summary = synthesis
+        elif result_type == "SchemeInformationResponse":
+            tool_result.summary = synthesis
+        elif result_type == "CertificationGuidanceResponse":
+            # Don't replace structured steps, only add summary
+            if hasattr(tool_result, 'summary'):
+                tool_result.summary = synthesis
+        elif result_type == "StandardRecommendationResponse":
+            # Keep structured standards list, only update summary
+            if hasattr(tool_result, 'summary'):
+                tool_result.summary = synthesis
+        elif result_type == "LaboratoryResponse":
+            if hasattr(tool_result, 'summary'):
+                tool_result.summary = synthesis
+
+        return tool_result
+
+    def _extract_evidence(self, tool_result: FinalResponseUnion) -> str:
+        """Extract text evidence from tool result for Gemini synthesis."""
+        result_type = type(tool_result).__name__
+        parts = []
+
+        if result_type == "StandardRecommendationResponse":
+            standards = getattr(tool_result, 'standards', [])
+            for s in standards:
+                parts.append(f"Standard: {s.code} — {s.title}. Reason: {s.reason}")
+                if getattr(s, 'is_compulsory', False):
+                    parts.append(f"  → COMPULSORY under QCO")
+                if getattr(s, 'scope', None):
+                    parts.append(f"  → Scope: {s.scope}")
+        elif result_type == "TextResponse":
+            parts.append(getattr(tool_result, 'content', ''))
+        elif result_type == "HallmarkingResponse":
+            parts.append(getattr(tool_result, 'summary', ''))
+            details = getattr(tool_result, 'details', [])
+            for d in details:
+                if hasattr(d, 'description'):
+                    parts.append(d.description)
+        elif result_type == "LaboratoryResponse":
+            labs = getattr(tool_result, 'labs', [])
+            for lab in labs:
+                parts.append(f"Lab: {getattr(lab, 'name', '')} | City: {getattr(lab, 'location', '')} | Tests: {', '.join(getattr(lab, 'supported_standards', []))}")
+        elif result_type == "SchemeInformationResponse":
+            parts.append(getattr(tool_result, 'summary', ''))
+        elif result_type == "CertificationGuidanceResponse":
+            parts.append(getattr(tool_result, 'summary', ''))
+
+        return "\n".join(p for p in parts if p and str(p).strip())
+
     def process_message(self, request: ChatRequest) -> ChatResponse:
         session_id = request.session_id or str(uuid.uuid4())
         stages: List[ProcessingStage] = []
 
-        # Stage 1: Understanding Request & Strict Intent Classification
-        stages.append(
-            ProcessingStage(
-                stage="Understanding request",
-                detail="Analyzing technical context and user query scope"
-            )
-        )
+        # Stage 1: Intent Classification
+        stages.append(ProcessingStage(
+            stage="Understanding request",
+            detail="Analyzing technical context and user query scope"
+        ))
 
         intent_result: IntentClassification = classify_query_intent(request.message, language=request.language)
         allowed_tools = INTENT_TO_ALLOWED_TOOLS.get(intent_result.intent, [])
 
-        safe_query = request.message.encode("ascii", "backslashreplace").decode("ascii")
-
-        # Stage 2: Intent Validation & Out-of-Scope Check
+        # Out-of-scope: decline politely
         if intent_result.intent == IntentType.UNSUPPORTED_OR_OUT_OF_SCOPE:
-            logger.info(
-                f"[DIAGNOSTIC ROUTING] Query: '{safe_query}' | "
-                f"Classified Intent: {intent_result.intent.value} (confidence={intent_result.confidence:.2f}) | "
-                f"Validation: PASSED | "
-                f"Selected Tool: NONE | "
-                f"Reason: {intent_result.reasoning} | "
-                f"Tool Loop: TERMINATED WITHOUT TOOL EXECUTION"
-            )
-
-            stages.append(
-                ProcessingStage(
-                    stage="Scope boundary check",
-                    detail="Identified query as out of BIS domain; terminating tool loop"
-                )
-            )
-
             return ChatResponse(
                 session_id=session_id,
-                intent=IntentType.UNSUPPORTED_OR_OUT_OF_SCOPE.value,
+                intent=intent_result.intent.value,
                 tool_called=None,
                 processing_stages=stages,
                 response=TextResponse(
                     content=(
-                        "I am the Dev Dynasty BIS Intelligence Assistant, dedicated exclusively to Bureau of Indian Standards (BIS) "
-                        "regulations, Indian Standards (IS), conformity assessment schemes (ISI, CRS, FMCS), gold/silver hallmarking (HUID), "
-                        "and testing laboratories. Your request is outside this domain scope. Please ask a BIS or Indian Standards related query."
+                        "I am the BIS Intelligence Assistant, specialized in Bureau of Indian Standards (BIS) topics — "
+                        "Indian Standards (IS codes), QCOs, certification schemes, hallmarking, and testing laboratories. "
+                        "Your question appears to be outside this domain. "
+                        "Please ask me something related to BIS standards, product certification, or hallmarking!"
                     ),
                     sources=[],
-                    disclaimer="Dev Dynasty Assistant operates strictly within the Bureau of Indian Standards scope."
+                    disclaimer=""
                 )
             )
 
-        # Stage 2.5: Multi-Turn Context & Conversational Anaphora Resolution
-        context = extract_context_from_history(request.history)
-        active_standard = context.get("standard_code")
-        active_product = context.get("product")
+        # Stage 2: Tool selection via LLM
+        stages.append(ProcessingStage(
+            stage="Selecting retrieval tool",
+            detail=f"Intent: {intent_result.intent.value}"
+        ))
 
-        lower_query = request.message.lower()
-        is_qco_or_compulsory = any(k in lower_query for k in [
-            "compulsory", "mandatory", "qco", "quality control order", "order compulsory",
-            "is this standard compulsory", "is it compulsory", "under qco", "mandatory certification",
-            "अनिवार्य", "बाध्यकारी"
-        ])
-        is_anaphora = any(k in lower_query for k in [
-            "this standard", "this product", "it", "this", "the standard", "iss standard", "ye standard"
-        ])
-
-        # Specialized Grounded Handler: Direct QCO & Mandatory Certification Inquiries
-        if is_qco_or_compulsory:
-            target_std_code = None
-            if active_standard and is_anaphora:
-                target_std_code = active_standard
-            else:
-                std_match = re.search(r"\bIS\s*(\d{3,5})", request.message, re.IGNORECASE)
-                if std_match:
-                    target_std_code = f"IS {std_match.group(1)}"
-                elif active_standard:
-                    target_std_code = active_standard
-
-            if target_std_code:
-                stages.append(
-                    ProcessingStage(
-                        stage="Regulatory QCO verification",
-                        detail=f"Checking Quality Control Order and mandatory certification for {target_std_code}"
-                    )
-                )
-
-                found_stds = standards_repo.search_standards(target_std_code)
-                if found_stds:
-                    top_std = found_stds[0]
-                    std_title = top_std.get("title", "")
-                    std_code = top_std.get("code", target_std_code)
-                    std_status = top_std.get("status", "Active")
-                    std_reason = top_std.get("reason", "")
-                    std_url = top_std.get("source_url") or "https://www.bis.gov.in"
-
-                    grounded_context = (
-                        f"Standard: {std_code}\n"
-                        f"Title: {std_title}\n"
-                        f"Status: {std_status}\n"
-                        f"Regulatory Mandate / QCO Details: {std_reason}\n"
-                        f"Official Source URL: {std_url}"
-                    )
-
-                    synthesis = self.llm.synthesize_answer(
-                        prompt=request.message,
-                        context=grounded_context,
-                        language=request.language
-                    )
-
-                    if not synthesis:
-                        is_compulsory = "compulsory" in std_reason.lower() or std_status.lower() == "compulsory"
-                        comp_str = "COMPULSORY under BIS certification (Scheme I — ISI Mark)" if is_compulsory else "VOLUNTARY (not under compulsory QCO)"
-                        synthesis = (
-                            f"**Yes.** Bureau of Indian Standards (BIS) certification for **{std_code}** ({std_title}) is **{comp_str}**.\n\n"
-                            f"**Regulatory Framework:** {std_reason}. Under Section 16 of the BIS Act, 2016 and applicable statutory notifications, "
-                            f"all manufacturers, importers, and sellers must hold a valid BIS licence and display the Standard Mark."
-                        )
-
-                    stages.append(
-                        ProcessingStage(
-                            stage="Synthesizing grounded regulatory response",
-                            detail=f"Authoritative determination for {std_code}"
-                        )
-                    )
-
-                    rec_item = StandardItem(
-                        code=std_code,
-                        title=std_title,
-                        reason=std_reason,
-                        label="Applicable Mandatory Standard",
-                        confidence="high",
-                        match_strength="Definitive Regulatory Match",
-                        relevance_score=1.0,
-                        is_demo=False
-                    )
-
-                    return ChatResponse(
-                        session_id=session_id,
-                        intent=IntentType.TECHNICAL_QUERY.value,
-                        tool_called="verify_qco_status",
-                        processing_stages=stages,
-                        response=StandardRecommendationResponse(
-                            summary=synthesis,
-                            standards=[rec_item],
-                            sources=[
-                                SourceCitation(
-                                    document_title=f"BIS Mandatory Certification Order — {std_code}",
-                                    section="Quality Control Order (QCO) / Statutory Notification",
-                                    url=std_url,
-                                    is_demo=False
-                                )
-                            ],
-                            disclaimer="Final regulatory applicability and enforcement dates must be confirmed through official Gazette notifications on manakonline.in."
-                        )
-                    )
-
-        # Stage 3: LLM Decision & Controlled Tool Selection
         llm_decision = self.llm.generate_chat_response(
             prompt=request.message,
-            history=[{"role": m.role, "content": m.content} for m in request.history]
+            history=request.history,
+            tools=None
         )
 
-        tool_calls = llm_decision.get("tool_calls", [])
-        selected_tool: Optional[str] = None
-        tool_args: Dict = {}
+        selected_tool = None
+        tool_args: Dict[str, Any] = {}
+        selection_reason = "No tool selected"
 
-        if tool_calls:
-            candidate_tool = tool_calls[0]["name"]
-            # Enforce tool routing integrity: reject tools not allowed for this intent!
-            if candidate_tool in allowed_tools:
-                selected_tool = candidate_tool
-                tool_args = tool_calls[0].get("arguments", {})
-                selection_reason = f"Tool '{selected_tool}' is authorized for intent '{intent_result.intent.value}'."
-            else:
-                logger.warning(
-                    f"[DIAGNOSTIC ROUTING WARNING] Tool '{candidate_tool}' is not in allowed tools "
-                    f"{allowed_tools} for intent '{intent_result.intent.value}'. Blocking tool call."
-                )
-                selected_tool = allowed_tools[0] if allowed_tools else None
-                tool_args = {"query": request.message, "language": request.language}
-                selection_reason = f"Defaulting to primary authorized tool '{selected_tool}' for intent '{intent_result.intent.value}'."
+        requested_tool = llm_decision.get("tool_calls", [{}])[0].get("name") if llm_decision.get("tool_calls") else None
+        if requested_tool and requested_tool in allowed_tools:
+            selected_tool = requested_tool
+            tool_args = llm_decision.get("tool_calls", [{}])[0].get("arguments", {})
+            selection_reason = f"LLM selected tool within allowed set"
         elif allowed_tools:
             selected_tool = allowed_tools[0]
-            eff_product = active_product if (is_anaphora and active_product) else request.message
-            eff_query = f"{active_product} {active_standard or ''}".strip() if (is_anaphora and active_product) else request.message
+            # Build args from query
+            hist_context = extract_context_from_history(request.history or [])
             tool_args = {
-                "query": eff_query,
-                "product": eff_product,
-                "product_or_test": eff_product,
-                "language": request.language
+                "query": request.message,
+                "product": hist_context.get("product", ""),
+                "language": request.language,
+                "location": "",
             }
-            selection_reason = f"Automatically selected eligible tool '{selected_tool}' for intent '{intent_result.intent.value}'."
+            selection_reason = f"Fallback: used first allowed tool"
 
         if selected_tool:
-            logger.info(
-                f"[DIAGNOSTIC ROUTING] Query: '{safe_query}' | "
-                f"Classified Intent: {intent_result.intent.value} (confidence={intent_result.confidence:.2f}) | "
-                f"Eligible Tools: {allowed_tools} | "
-                f"Selected Tool: {selected_tool} | "
-                f"Selection Reason: {selection_reason} | "
-                f"Pydantic Validation: PASSED"
-            )
-
-            stages.append(
-                ProcessingStage(
-                    stage="Controlled tool execution",
-                    detail=f"Invoking verified domain tool: {selected_tool}"
-                )
-            )
-
-            stages.append(
-                ProcessingStage(
-                    stage="Searching BIS knowledge base",
-                    detail="Querying Indian Standards metadata and citations"
-                )
-            )
+            stages.append(ProcessingStage(
+                stage=f"Executing: {selected_tool}",
+                detail="Querying BIS knowledge base and Supabase"
+            ))
 
             try:
                 tool_result: FinalResponseUnion = tool_registry.execute_tool(
@@ -288,84 +204,45 @@ class AIOrchestrator:
                 )
             except Exception as tool_exc:
                 logger.error(f"Tool execution failed for {selected_tool}: {tool_exc}")
+                # Fall through to Gemini general knowledge
+                tool_result = None
+
+            if tool_result is not None:
+                evidence_text = self._extract_evidence(tool_result)
+
+                if evidence_text and evidence_text.strip():
+                    # TIER A: Evidence found — synthesize grounded answer
+                    synthesis = self.llm.synthesize_answer(
+                        prompt=request.message,
+                        context=f"Official BIS Evidence Retrieved:\n{evidence_text}",
+                        language=request.language
+                    )
+                else:
+                    # TIER B: No evidence in DB — use Gemini general BIS knowledge
+                    synthesis = self.llm.synthesize_answer(
+                        prompt=request.message,
+                        context="USE_GENERAL_KNOWLEDGE",
+                        language=request.language
+                    )
+
+                final_result = self._build_final_response(tool_result, synthesis)
+
                 return ChatResponse(
                     session_id=session_id,
                     intent=intent_result.intent.value,
                     tool_called=selected_tool,
                     processing_stages=stages,
-                    response=TextResponse(
-                        content="I encountered an error while retrieving information. Please try rephrasing your question or try again in a moment.",
-                        sources=[],
-                        disclaimer="Tool execution encountered a temporary error."
-                    )
+                    response=final_result
                 )
 
-            stages.append(
-                ProcessingStage(
-                    stage="Verifying source citations",
-                    detail="Ensuring document titles, sections, and demo notices are attached"
-                )
-            )
-
-
-            # TASK 1: Synthesize tool results
-            evidence_text = ""
-            result_type = type(tool_result).__name__
-            if result_type == "StandardRecommendationResponse":
-                evidence_text = "\n".join([f"Standard: {s.code}, Title: {s.title}, Reason: {s.reason}" for s in getattr(tool_result, 'standards', [])])
-            elif result_type == "TextResponse":
-                evidence_text = getattr(tool_result, 'content', '')
-            elif result_type == "HallmarkingResponse":
-                evidence_text = getattr(tool_result, 'summary', '')
-            elif result_type == "LaboratoryResponse":
-                evidence_text = "\n".join([f"Lab: {l.name}, Location: {l.location}, Standards: {', '.join(getattr(l, 'supported_standards', []))}" for l in getattr(tool_result, 'labs', [])])
-            elif result_type == "SchemeInformationResponse":
-                evidence_text = getattr(tool_result, 'summary', '')
-
-            # TASK 2: TIER A and TIER B logic
-            if evidence_text and str(evidence_text).strip():
-                # TIER A
-                synthesis = self.llm.synthesize_answer(
-                    prompt=request.message,
-                    context=f"Retrieved Evidence:\n{evidence_text}",
-                    language=request.language
-                )
-                if synthesis:
-                    if hasattr(tool_result, 'summary') and not isinstance(tool_result, TextResponse):
-                        tool_result.summary = synthesis
-                    elif isinstance(tool_result, TextResponse):
-                        tool_result.content = synthesis
-            else:
-                # TIER B: BIS-related question but no evidence
-                synthesis = self.llm.synthesize_answer(
-                    prompt=request.message,
-                    context="No specific evidence found. I could not find verified official data for this exact question. Provide general BIS guidance and acknowledge missing information.",
-                    language=request.language
-                )
-                if synthesis:
-                    if hasattr(tool_result, 'summary') and not isinstance(tool_result, TextResponse):
-                        tool_result.summary = synthesis
-                    elif isinstance(tool_result, TextResponse):
-                        tool_result.content = synthesis
-
-            return ChatResponse(
-                session_id=session_id,
-                intent=intent_result.intent.value,
-                tool_called=selected_tool,
-                processing_stages=stages,
-                response=tool_result
-            )
-
-        # TIER B: No tool selected, but BIS-related (fallback direct guidance)
-        stages.append(
-            ProcessingStage(
-                stage="Preparing response",
-                detail="Synthesizing BIS guidance (No evidence)"
-            )
-        )
+        # TIER C: No tool result at all — Gemini answers from general BIS knowledge
+        stages.append(ProcessingStage(
+            stage="Generating response",
+            detail="Using Gemini general BIS knowledge"
+        ))
         synthesis = self.llm.synthesize_answer(
             prompt=request.message,
-            context="No specific evidence found. I could not find verified official data for this exact question. Provide general BIS guidance and acknowledge missing information.",
+            context="USE_GENERAL_KNOWLEDGE",
             language=request.language
         )
         return ChatResponse(
@@ -374,9 +251,9 @@ class AIOrchestrator:
             tool_called=None,
             processing_stages=stages,
             response=TextResponse(
-                content=synthesis if synthesis else llm_decision.get("text", "I could not find verified official data for this exact question. Please clarify your BIS or Indian Standards query."),
+                content=synthesis or "I couldn't find a specific answer. Please try rephrasing your BIS-related question.",
                 sources=[],
-                disclaimer="Dev Dynasty Assistant operates strictly within the Bureau of Indian Standards scope."
+                disclaimer=""
             )
         )
 

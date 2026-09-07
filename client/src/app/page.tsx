@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth";
 import {
   Shield,
   Sparkles,
@@ -25,8 +26,19 @@ import {
 } from "lucide-react";
 
 export default function LandingPage() {
+  const { token, isLoading } = useAuth();
   const router = useRouter();
   const [heroSearch, setHeroSearch] = useState("");
+
+  useEffect(() => {
+    if (!isLoading && !token) {
+      router.replace("/login");
+    }
+  }, [isLoading, token, router]);
+
+  if (isLoading || !token) {
+    return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>;
+  }
 
   const handleHeroSubmit = (e: React.FormEvent) => {
     e.preventDefault();
