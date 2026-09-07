@@ -55,6 +55,7 @@ def send_verification_email(email: str, otp: str) -> bool:
         return True  # Demo mode — skip email
 
     try:
+        sender_email = settings.BREVO_SENDER_EMAIL or "noreply@devdynasty.bis"
         response = httpx.post(
             "https://api.brevo.com/v3/smtp/email",
             headers={
@@ -62,7 +63,7 @@ def send_verification_email(email: str, otp: str) -> bool:
                 "Content-Type": "application/json"
             },
             json={
-                "sender": {"name": "Dev Dynasty BIS Assistant", "email": "noreply@devdynasty.bis"},
+                "sender": {"name": "Dev Dynasty BIS Assistant", "email": sender_email},
                 "to": [{"email": email}],
                 "subject": "BIS Intelligence Assistant — Email Verification Code",
                 "htmlContent": f"""

@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     JWT_SECRET: str = "dev-dynasty-bis-jwt-secret-sih267107-change-in-production"
     JWT_EXPIRY_HOURS: int = 24
     BREVO_API_KEY: Optional[str] = None
+    BREVO_SENDER_EMAIL: str = "noreply@devdynasty.bis"
     DEMO_USER_EMAIL: str = "demo@devdynasty.bis"
     DEMO_USER_PASSWORD: str = "BISDemo2024!"
 

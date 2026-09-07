@@ -60,7 +60,8 @@ async def register(req: RegisterRequest):
         raise HTTPException(status_code=503, detail="Database not available")
 
     try:
-        existing = supabase.table("app_users").select("id").eq("email", req.email).execute()
+        clean_email = req.email.lower().strip()
+        existing = supabase.table("app_users").select("id").eq("email", clean_email).execute()
         if existing.data:
             raise HTTPException(status_code=409, detail="Email already registered")
 
@@ -72,19 +73,19 @@ async def register(req: RegisterRequest):
         is_verified = demo_mode  # Auto-verify in demo mode
 
         supabase.table("app_users").insert({
-            "email": req.email,
+            "email": clean_email,
             "password_hash": password_hash,
-            "name": req.name,
+            "name": req.name.strip() if req.name else "",
             "is_verified": is_verified,
             "verification_code": None if demo_mode else otp
         }).execute()
 
         if not demo_mode:
-            send_verification_email(req.email, otp)
+            send_verification_email(clean_email, otp)
 
         return {
             "message": "Registration successful! You can now login." if demo_mode else "Registration successful. Please verify your email.",
-            "email": req.email,
+            "email": clean_email,
             "verified": demo_mode,
             "demo_mode": demo_mode
         }
@@ -102,7 +103,8 @@ async def verify_email(req: VerifyRequest):
         raise HTTPException(status_code=503, detail="Database not available")
 
     try:
-        result = supabase.table("app_users").select("*").eq("email", req.email).execute()
+        clean_email = req.email.lower().strip()
+        result = supabase.table("app_users").select("*").eq("email", clean_email).execute()
         if not result.data:
             raise HTTPException(status_code=404, detail="User not found")
 
@@ -111,13 +113,13 @@ async def verify_email(req: VerifyRequest):
         if user.get("is_verified"):
             return {"message": "Email already verified", "verified": True}
 
-        if user.get("verification_code") != req.code:
+        if user.get("verification_code") != req.code.strip():
             raise HTTPException(status_code=400, detail="Invalid verification code")
 
         supabase.table("app_users").update({
             "is_verified": True,
             "verification_code": None
-        }).eq("email", req.email).execute()
+        }).eq("email", clean_email).execute()
 
         return {"message": "Email verified successfully", "verified": True}
     except HTTPException:
