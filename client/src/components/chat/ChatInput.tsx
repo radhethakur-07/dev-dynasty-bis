@@ -1,6 +1,7 @@
-﻿import React, { useState, KeyboardEvent } from "react";
+import React, { useState, KeyboardEvent } from "react";
 import { Language } from "@/types/api";
 import { Send, Sparkles, Globe, CornerDownLeft } from "lucide-react";
+import { VoiceInputButton } from "@/components/common/VoiceInputButton";
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
@@ -87,6 +88,18 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           }
           disabled={isLoading}
           className="flex-1 bg-transparent px-4 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none disabled:opacity-50"
+        />
+
+        {/* Voice-to-Text Input Button */}
+        <VoiceInputButton
+          language={language}
+          disabled={isLoading}
+          onTranscript={(text, isFinal) => {
+            if (isFinal) {
+              setInput((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text));
+            }
+          }}
+          className="mr-1.5"
         />
 
         <button

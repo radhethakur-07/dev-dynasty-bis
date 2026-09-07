@@ -24,6 +24,7 @@ import {
   ExternalLink,
   ChevronRight
 } from "lucide-react";
+import { VoiceInputButton } from "@/components/common/VoiceInputButton";
 
 export default function LandingPage() {
   const { token, isLoading } = useAuth();
@@ -165,22 +166,32 @@ export default function LandingPage() {
           {/* Interactive Live Hero Search Bar */}
           <div className="max-w-2xl mx-auto pt-2">
             <form onSubmit={handleHeroSubmit} className="relative flex items-center">
-              <div className="relative w-full">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <div className="relative w-full flex items-center">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                 <input
                   type="text"
                   value={heroSearch}
                   onChange={(e) => setHeroSearch(e.target.value)}
                   placeholder="Ask any query e.g. 'Standard for packaged drinking water' or 'IS 2347'..."
-                  className="w-full pl-12 pr-32 py-3.5 rounded-2xl bg-slate-900/90 border border-slate-700/80 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-xl"
+                  className="w-full pl-12 pr-44 py-3.5 rounded-2xl bg-slate-900/90 border border-slate-700/80 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-xl"
                 />
-                <button
-                  type="submit"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors flex items-center gap-1.5 shadow-md shadow-blue-600/30"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Ask AI</span>
-                </button>
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                  <VoiceInputButton
+                    language="en"
+                    onTranscript={(text, isFinal) => {
+                      if (isFinal) {
+                        setHeroSearch((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text));
+                      }
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors flex items-center gap-1.5 shadow-md shadow-blue-600/30"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Ask AI</span>
+                  </button>
+                </div>
               </div>
             </form>
 

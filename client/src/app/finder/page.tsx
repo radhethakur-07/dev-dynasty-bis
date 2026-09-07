@@ -21,6 +21,7 @@ import {
   ArrowRight,
   Filter
 } from "lucide-react";
+import { VoiceInputButton } from "@/components/common/VoiceInputButton";
 
 export default function StandardsFinderPage() {
   const [activeTab, setActiveTab] = useState<"instant" | "analyzer">("instant");
@@ -206,16 +207,27 @@ export default function StandardsFinderPage() {
                 value={instantQuery}
                 onChange={(e) => setInstantQuery(e.target.value)}
                 placeholder="Type a product name or standard code (e.g., 'pressure cooker', 'IS 269', 'cables', 'toys', 'helmet')..."
-                className="w-full pl-12 pr-32 py-3.5 rounded-xl bg-slate-950/80 border border-slate-700 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                className="w-full pl-12 pr-44 py-3.5 rounded-xl bg-slate-950/80 border border-slate-700 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
               />
-              <button
-                type="submit"
-                disabled={isLoading || !instantQuery.trim()}
-                className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-bold transition-colors flex items-center gap-1.5"
-              >
-                {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
-                <span>Search</span>
-              </button>
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                <VoiceInputButton
+                  language={language}
+                  disabled={isLoading}
+                  onTranscript={(text, isFinal) => {
+                    if (isFinal) {
+                      setInstantQuery((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text));
+                    }
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={isLoading || !instantQuery.trim()}
+                  className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-bold transition-colors flex items-center gap-1.5"
+                >
+                  {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+                  <span>Search</span>
+                </button>
+              </div>
             </div>
 
             {/* Sector Filters */}
@@ -264,13 +276,26 @@ export default function StandardsFinderPage() {
           </div>
 
           <div className="space-y-4">
-            <textarea
-              rows={4}
-              value={specText}
-              onChange={(e) => setSpecText(e.target.value)}
-              placeholder="e.g., We are a startup manufacturing stainless steel domestic pressure cookers of 3L and 5L capacity with fusible plugs for kitchen usage..."
-              className="w-full p-4 rounded-xl bg-slate-950/80 border border-slate-700 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-            />
+            <div className="relative">
+              <textarea
+                rows={4}
+                value={specText}
+                onChange={(e) => setSpecText(e.target.value)}
+                placeholder="e.g., We are a startup manufacturing stainless steel domestic pressure cookers of 3L and 5L capacity with fusible plugs for kitchen usage..."
+                className="w-full p-4 pr-14 rounded-xl bg-slate-950/80 border border-slate-700 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+              />
+              <div className="absolute right-3 top-3">
+                <VoiceInputButton
+                  language={language}
+                  disabled={isLoading}
+                  onTranscript={(text, isFinal) => {
+                    if (isFinal) {
+                      setSpecText((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text));
+                    }
+                  }}
+                />
+              </div>
+            </div>
 
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">

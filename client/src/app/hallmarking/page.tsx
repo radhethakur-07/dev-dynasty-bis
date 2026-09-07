@@ -19,6 +19,7 @@ import {
   ExternalLink,
   QrCode
 } from "lucide-react";
+import { VoiceInputButton } from "@/components/common/VoiceInputButton";
 
 export default function HallmarkingPage() {
   const [activeTab, setActiveTab] = useState<"simulator" | "calculator" | "guidance">("simulator");
@@ -154,18 +155,31 @@ export default function HallmarkingPage() {
           </div>
 
           <form onSubmit={handleSimulateHUID} className="flex items-center gap-3 max-w-md">
-            <input
-              type="text"
-              maxLength={6}
-              value={huidInput}
-              onChange={(e) => setHuidInput(e.target.value.toUpperCase())}
-              placeholder="e.g. KD9821"
-              className="px-4 py-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-base font-mono tracking-widest text-center text-slate-100 uppercase focus:outline-none focus:border-blue-500"
-            />
+            <div className="relative flex-1">
+              <input
+                type="text"
+                maxLength={6}
+                value={huidInput}
+                onChange={(e) => setHuidInput(e.target.value.toUpperCase())}
+                placeholder="e.g. KD9821"
+                className="w-full px-4 py-2.5 pr-12 rounded-xl bg-slate-950/80 border border-slate-700 text-base font-mono tracking-widest text-center text-slate-100 uppercase focus:outline-none focus:border-blue-500"
+              />
+              <div className="absolute right-1.5 top-1/2 -translate-y-1/2">
+                <VoiceInputButton
+                  language="en"
+                  onTranscript={(text, isFinal) => {
+                    if (isFinal) {
+                      const sanitized = text.replace(/[^a-zA-Z0-9]/g, "").slice(0, 6).toUpperCase();
+                      if (sanitized) setHuidInput(sanitized);
+                    }
+                  }}
+                />
+              </div>
+            </div>
             <button
               type="submit"
               disabled={huidInput.length !== 6}
-              className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-md shadow-blue-600/30 flex items-center gap-2"
+              className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-md shadow-blue-600/30 flex items-center gap-2 flex-shrink-0"
             >
               <ShieldCheck className="w-4 h-4" />
               <span>Verify HUID</span>
@@ -300,14 +314,25 @@ export default function HallmarkingPage() {
         <div className="p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/60 shadow-xl space-y-6 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Ask about hallmarking rules, silver grades, consumer testing fees..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                className="w-full pl-10 pr-12 py-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500"
               />
+              <div className="absolute right-1.5 top-1/2 -translate-y-1/2">
+                <VoiceInputButton
+                  language={language}
+                  disabled={isLoading}
+                  onTranscript={(text, isFinal) => {
+                    if (isFinal) {
+                      setQuery((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text));
+                    }
+                  }}
+                />
+              </div>
             </div>
             <button
               type="button"

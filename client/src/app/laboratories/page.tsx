@@ -19,6 +19,7 @@ import {
   Calendar,
   Sparkles
 } from "lucide-react";
+import { VoiceInputButton } from "@/components/common/VoiceInputButton";
 
 export default function LaboratoriesPage() {
   const [productOrTest, setProductOrTest] = useState("Food");
@@ -121,15 +122,26 @@ export default function LaboratoriesPage() {
               <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                 Product, Material, or Test Discipline
               </label>
-              <div className="relative">
-                <FlaskConical className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <div className="relative flex items-center">
+                <FlaskConical className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                 <input
                   type="text"
                   value={productOrTest}
                   onChange={(e) => setProductOrTest(e.target.value)}
                   placeholder="e.g., Food, Cement, Electrical, Cable, Pressure Cooker..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                  className="w-full pl-10 pr-12 py-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500"
                 />
+                <div className="absolute right-1.5 top-1/2 -translate-y-1/2">
+                  <VoiceInputButton
+                    language={language}
+                    disabled={isLoading}
+                    onTranscript={(text, isFinal) => {
+                      if (isFinal) {
+                        setProductOrTest((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text));
+                      }
+                    }}
+                  />
+                </div>
               </div>
             </div>
 
@@ -137,15 +149,26 @@ export default function LaboratoriesPage() {
               <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                 Location (City or State)
               </label>
-              <div className="relative">
-                <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <div className="relative flex items-center">
+                <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                 <input
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="e.g., Hyderabad, Bengaluru, Delhi, Noida, Mumbai..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                  className="w-full pl-10 pr-12 py-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500"
                 />
+                <div className="absolute right-1.5 top-1/2 -translate-y-1/2">
+                  <VoiceInputButton
+                    language={language}
+                    disabled={isLoading}
+                    onTranscript={(text, isFinal) => {
+                      if (isFinal) {
+                        setLocation((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text));
+                      }
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </div>
