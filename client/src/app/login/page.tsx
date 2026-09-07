@@ -1,17 +1,19 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { loginUser } from "@/lib/api";
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const justRegistered = searchParams.get("registered") === "1";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,7 +24,7 @@ export default function LoginPage() {
       login(token, user);
       router.push("/assistant");
     } catch (err: any) {
-      setError(err.message || "Failed to login");
+      setError(err.message || "Failed to login. Check your credentials.");
     } finally {
       setLoading(false);
     }
@@ -55,15 +57,19 @@ export default function LoginPage() {
                 {error}
               </div>
             )}
-            
-            <div className="bg-blue-500/10 border border-blue-500/50 rounded-md p-3 text-sm text-blue-400 text-center">
-              Demo: demo@devdynasty.bis / BISDemo2024!
+
+            {justRegistered && (
+              <div className="bg-green-500/10 border border-green-500/50 rounded-md p-3 text-sm text-green-400 text-center">
+                ✅ Account created! Login below.
+              </div>
+            )}
+
+            <div className="bg-blue-500/10 border border-blue-500/50 rounded-md p-3 text-xs text-blue-400 text-center">
+              <span className="font-semibold">Demo:</span> demo@devdynasty.bis / BISDemo2024!
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-300">
-                Email address
-              </label>
+              <label htmlFor="email" className="block text-sm font-medium text-slate-300">Email address</label>
               <div className="mt-1">
                 <input
                   id="email"
@@ -74,14 +80,13 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-slate-700 rounded-md shadow-sm placeholder-slate-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-slate-950 text-white"
+                  placeholder="demo@devdynasty.bis"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-300">
-                Password
-              </label>
+              <label htmlFor="password" className="block text-sm font-medium text-slate-300">Password</label>
               <div className="mt-1">
                 <input
                   id="password"
@@ -92,6 +97,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-slate-700 rounded-md shadow-sm placeholder-slate-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-slate-950 text-white"
+                  placeholder="••••••••"
                 />
               </div>
             </div>
@@ -113,16 +119,13 @@ export default function LoginPage() {
                 <div className="w-full border-t border-slate-800" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-slate-900 text-slate-400">
-                  New to BIS Intelligence Assistant?
-                </span>
+                <span className="px-2 bg-slate-900 text-slate-400">New to BIS Intelligence Assistant?</span>
               </div>
             </div>
-
             <div className="mt-6">
               <Link
                 href="/register"
-                className="w-full flex justify-center py-2 px-4 border border-slate-700 rounded-md shadow-sm text-sm font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-slate-900"
+                className="w-full flex justify-center py-2 px-4 border border-slate-700 rounded-md shadow-sm text-sm font-medium text-slate-300 bg-slate-800 hover:bg-slate-700"
               >
                 Create an account
               </Link>
@@ -131,5 +134,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

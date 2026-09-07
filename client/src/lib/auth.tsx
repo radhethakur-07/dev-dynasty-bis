@@ -24,7 +24,10 @@ export function useAuth() {
   return ctx;
 }
 
-const PUBLIC_PATHS = ["/login", "/register", "/verify", "/"];
+// "/" is public (landing page) but clicking protected links will redirect to login
+const PUBLIC_PATHS = ["/", "/login", "/register", "/verify"];
+// These paths require auth — redirect to login if not logged in
+const PROTECTED_PATHS = ["/assistant", "/finder", "/laboratories", "/hallmarking", "/certification", "/about"];
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -44,7 +47,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!isLoading && !token && !PUBLIC_PATHS.includes(pathname)) {
+    if (isLoading) return;
+    // Only redirect to login if on a PROTECTED path and not logged in
+    const isProtected = PROTECTED_PATHS.some(p => pathname.startsWith(p));
+    if (!token && isProtected) {
       router.push("/login");
     }
   }, [isLoading, token, pathname, router]);

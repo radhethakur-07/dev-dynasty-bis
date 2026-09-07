@@ -67,22 +67,26 @@ async def register(req: RegisterRequest):
         otp = generate_otp()
         password_hash = hash_password(req.password)
 
+        # If Brevo is not configured, auto-verify the user (demo mode)
+        demo_mode = not settings.BREVO_API_KEY
+        is_verified = demo_mode  # Auto-verify in demo mode
+
         supabase.table("app_users").insert({
             "email": req.email,
             "password_hash": password_hash,
             "name": req.name,
-            "is_verified": False,
-            "verification_code": otp
+            "is_verified": is_verified,
+            "verification_code": None if demo_mode else otp
         }).execute()
 
-        # Send verification email via Brevo
-        email_sent = send_verification_email(req.email, otp)
+        if not demo_mode:
+            send_verification_email(req.email, otp)
 
         return {
-            "message": "Registration successful. Please verify your email.",
+            "message": "Registration successful! You can now login." if demo_mode else "Registration successful. Please verify your email.",
             "email": req.email,
-            "email_sent": email_sent,
-            "debug_otp": otp if not settings.BREVO_API_KEY else None  # Only show in demo mode
+            "verified": demo_mode,
+            "demo_mode": demo_mode
         }
     except HTTPException:
         raise

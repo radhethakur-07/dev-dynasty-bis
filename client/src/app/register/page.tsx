@@ -21,11 +21,21 @@ export default function RegisterPage() {
       setError("Passwords do not match");
       return;
     }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
 
     setLoading(true);
     try {
-      await registerUser(name, email, password);
-      router.push(`/verify?email=${encodeURIComponent(email)}`);
+      const result = await registerUser(name, email, password);
+      // If demo mode (no Brevo), user is auto-verified → go to login
+      if (result.verified || result.demo_mode) {
+        router.push(`/login?registered=1`);
+      } else {
+        // Email verification required
+        router.push(`/verify?email=${encodeURIComponent(email)}`);
+      }
     } catch (err: any) {
       setError(err.message || "Failed to register");
     } finally {
