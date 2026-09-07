@@ -5,7 +5,7 @@ import { ChatMessage } from "@/types/api";
 import { AgentExecutionDrawer } from "./AgentExecutionDrawer";
 import { ResponseDispatcher } from "@/components/responses/ResponseDispatcher";
 import { ProcessingIndicator } from "./ProcessingIndicator";
-import { Bot, User, Copy, Check, ThumbsUp, ThumbsDown, Sparkles } from "lucide-react";
+import { Bot, User, Copy, Check, ThumbsUp, ThumbsDown } from "lucide-react";
 
 interface ChatAreaProps {
   messages: ChatMessage[];
@@ -40,9 +40,9 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ messages, isLoading, onQuick
               isUser ? "flex-row-reverse" : "flex-row"
             }`}
           >
-            {/* Avatar */}
+            {/* Avatar — flex-shrink-0 ensures it never gets clipped */}
             <div
-              className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-xs font-bold border ${
+              className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-xs font-bold border mt-0.5 ${
                 isUser
                   ? "bg-blue-600 border-blue-500 text-white"
                   : "bg-slate-900 border-slate-700 text-blue-400"
@@ -51,9 +51,9 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ messages, isLoading, onQuick
               {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
             </div>
 
-            {/* Message Content Bubble */}
+            {/* Message Content Bubble — NO overflow-hidden so corners don't clip */}
             <div
-              className={`flex-1 rounded-2xl p-4.5 border transition-all overflow-hidden ${
+              className={`flex-1 rounded-2xl p-4 border transition-all ${
                 isUser
                   ? "bg-blue-600/15 border-blue-500/30 text-slate-100 max-w-xl"
                   : "bg-slate-900/80 border-slate-800 text-slate-200 shadow-sm"
@@ -72,7 +72,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ messages, isLoading, onQuick
 
               {/* Conversational Text Message */}
               {msg.content && (
-                <div className="text-sm leading-relaxed mb-3 text-slate-200 prose prose-invert prose-sm max-w-none break-words overflow-wrap-anywhere">
+                <div className="text-sm leading-relaxed mb-3 text-slate-200 prose prose-invert prose-sm max-w-none break-words">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                 </div>
               )}
@@ -122,10 +122,10 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ messages, isLoading, onQuick
       {/* Loading state indicator */}
       {isLoading && (
         <div className="flex items-start gap-3 max-w-4xl mx-auto">
-          <div className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-700 text-blue-400 flex items-center justify-center flex-shrink-0">
+          <div className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-700 text-blue-400 flex items-center justify-center flex-shrink-0 mt-0.5">
             <Bot className="w-4 h-4" />
           </div>
-          <div className="flex-1 rounded-2xl p-4 border bg-slate-900/80 border-slate-800 max-w-xl">
+          <div className="flex-1 rounded-2xl p-4 border bg-slate-900/80 border-slate-800">
             <ProcessingIndicator stages={[]} isLoading={true} />
           </div>
         </div>
