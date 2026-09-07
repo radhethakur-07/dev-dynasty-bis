@@ -45,7 +45,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ messages, isLoading, onQuick
               className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-xs font-bold border mt-0.5 ${
                 isUser
                   ? "bg-blue-600 border-blue-500 text-white"
-                  : "bg-slate-900 border-slate-700 text-blue-400"
+                  : "bg-blue-50 dark:bg-slate-900 border-blue-100 dark:border-slate-700 text-blue-600 dark:text-blue-400 shadow-sm"
               }`}
             >
               {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
@@ -55,8 +55,8 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ messages, isLoading, onQuick
             <div
               className={`flex-1 rounded-2xl p-4 border transition-all ${
                 isUser
-                  ? "bg-blue-600/15 border-blue-500/30 text-slate-100 max-w-xl"
-                  : "bg-slate-900/80 border-slate-800 text-slate-200 shadow-sm"
+                  ? "bg-blue-600 text-white border-transparent shadow-sm max-w-xl"
+                  : "bg-white dark:bg-slate-900/80 border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 shadow-sm"
               }`}
             >
               {/* Agent Reasoning & Live Retrieval Trace */}
@@ -72,7 +72,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ messages, isLoading, onQuick
 
               {/* Conversational Text Message */}
               {msg.content && (
-                <div className="text-sm leading-relaxed mb-3 text-slate-200 prose prose-invert prose-sm max-w-none break-words">
+                <div className="text-sm leading-relaxed mb-3 text-slate-800 dark:text-slate-200 dark:prose-invert prose-slate prose-sm max-w-none break-words">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                 </div>
               )}

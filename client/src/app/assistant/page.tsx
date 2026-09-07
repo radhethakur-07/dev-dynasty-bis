@@ -249,7 +249,7 @@ function AssistantChat() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+    <div className="flex h-[calc(100vh-4rem)] bg-slate-50 dark:bg-gradient-to-b dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       {/* Conversation Sidebar */}
       <ConversationSidebar
         conversations={conversations}
@@ -263,22 +263,22 @@ function AssistantChat() {
       />
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 bg-slate-50/50 dark:bg-transparent">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800/60 bg-slate-950/80">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800/60 bg-white/90 dark:bg-slate-950/80 backdrop-blur-sm shadow-sm">
           <div className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-blue-500" />
-            <h1 className="text-lg font-semibold text-white">BIS Intelligence Assistant</h1>
-            <span className="px-2 py-0.5 rounded-full text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20">
+            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">BIS Intelligence Assistant</h1>
+            <span className="px-2 py-0.5 rounded-full text-[10px] bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
               SIH267107
             </span>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <span className="text-xs text-slate-500 hidden sm:inline">Powered by Gemini</span>
+              <Sparkles className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+              <span className="text-xs text-slate-500 hidden sm:inline font-medium">Powered by Gemini</span>
             </div>
-            <button onClick={logout} className="text-xs text-slate-500 hover:text-red-400">
+            <button onClick={logout} className="text-xs text-slate-500 hover:text-red-500 font-medium transition-colors">
               Logout
             </button>
           </div>
