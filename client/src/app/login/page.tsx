@@ -1,13 +1,16 @@
 "use client";
+
 import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { loginUser } from "@/lib/api";
+import { Shield, AlertCircle, CheckCircle, Eye, EyeOff } from "lucide-react";
 
 function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -23,113 +26,250 @@ function LoginForm() {
       const { token, user } = await loginUser(email, password);
       login(token, user);
       router.push("/assistant");
-    } catch (err: any) {
-      setError(err.message || "Failed to login. Check your credentials.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to sign in. Check your credentials.");
     } finally {
       setLoading(false);
     }
   };
 
+  const inputStyle = {
+    backgroundColor: "var(--surface-base)",
+    border: "1.5px solid var(--border)",
+    color: "var(--text-primary)",
+  };
+
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">B</span>
-            </div>
-            <span className="text-2xl font-bold text-white">Dev Dynasty</span>
+    <div
+      className="min-h-screen flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8"
+      style={{ backgroundColor: "var(--surface-base)" }}
+    >
+      <div className="sm:mx-auto sm:w-full sm:max-w-sm">
+        {/* Logo */}
+        <div className="flex justify-center mb-6">
+          <div
+            className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg"
+            style={{
+              background: "linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%)",
+              boxShadow: "0 8px 24px -6px rgba(37, 99, 235, 0.35)",
+            }}
+          >
+            <Shield className="w-6 h-6 text-white" />
           </div>
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
-          BIS Intelligence Assistant
-        </h2>
-        <div className="mt-2 text-center text-sm text-slate-400">
-          <span className="px-2 py-1 bg-slate-800 rounded-md text-xs font-mono text-blue-400 border border-slate-700">SIH267107</span>
+
+        <h1
+          className="text-center text-2xl font-extrabold tracking-tight"
+          style={{ color: "var(--text-primary)" }}
+        >
+          BIS Intelligence
+        </h1>
+        <p className="mt-2 text-center text-sm" style={{ color: "var(--text-muted)" }}>
+          AI-powered Indian Standards Assistant
+        </p>
+        <div className="flex justify-center mt-2">
+          <span
+            className="px-2 py-0.5 rounded text-[11px] font-mono font-bold"
+            style={{
+              backgroundColor: "var(--accent-subtle)",
+              color: "var(--accent)",
+              border: "1px solid var(--accent-border)",
+            }}
+          >
+            SIH267107 · Dev Dynasty
+          </span>
         </div>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-slate-900 py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-slate-800">
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            {error && (
-              <div className="bg-red-500/10 border border-red-500/50 rounded-md p-3 text-sm text-red-500 text-center">
-                {error}
-              </div>
-            )}
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-sm">
+        <div
+          className="py-8 px-6 rounded-2xl"
+          style={{
+            backgroundColor: "var(--surface-raised)",
+            border: "1px solid var(--border)",
+            boxShadow: "0 4px 24px -8px rgba(0,0,0,0.12)",
+          }}
+        >
+          {/* Registered success */}
+          {justRegistered && (
+            <div
+              className="flex items-center gap-2 p-3 rounded-xl text-sm mb-4"
+              style={{
+                backgroundColor: "rgba(16, 185, 129, 0.08)",
+                border: "1px solid rgba(16, 185, 129, 0.25)",
+                color: "var(--success)",
+              }}
+            >
+              <CheckCircle className="w-4 h-4 flex-shrink-0" />
+              <span>Account created! Sign in below.</span>
+            </div>
+          )}
 
-            {justRegistered && (
-              <div className="bg-green-500/10 border border-green-500/50 rounded-md p-3 text-sm text-green-400 text-center">
-                ✅ Account created! Login below.
-              </div>
-            )}
+          {/* Demo credentials */}
+          <div
+            className="p-3 rounded-xl text-xs mb-5 text-center"
+            style={{
+              backgroundColor: "var(--accent-subtle)",
+              border: "1px solid var(--accent-border)",
+              color: "var(--accent)",
+            }}
+          >
+            <span className="font-semibold">Demo credentials: </span>
+            demo@devdynasty.bis / BISDemo2024!
+          </div>
 
-            <div className="bg-blue-500/10 border border-blue-500/50 rounded-md p-3 text-xs text-blue-400 text-center">
-              <span className="font-semibold">Demo:</span> demo@devdynasty.bis / BISDemo2024!
+          {/* Error */}
+          {error && (
+            <div
+              className="flex items-center gap-2 p-3 rounded-xl text-sm mb-4"
+              style={{
+                backgroundColor: "rgba(220, 38, 38, 0.08)",
+                border: "1px solid rgba(220, 38, 38, 0.2)",
+                color: "var(--error)",
+              }}
+            >
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            {/* Email */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="email"
+                className="block text-xs font-semibold"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                Email address
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl text-sm focus:outline-none transition-all"
+                style={inputStyle}
+                placeholder="demo@devdynasty.bis"
+                onFocus={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = "var(--accent)";
+                  (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 3px var(--accent-subtle)";
+                }}
+                onBlur={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
+                  (e.currentTarget as HTMLElement).style.boxShadow = "";
+                }}
+              />
             </div>
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-300">Email address</label>
-              <div className="mt-1">
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-slate-700 rounded-md shadow-sm placeholder-slate-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-slate-950 text-white"
-                  placeholder="demo@devdynasty.bis"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-300">Password</label>
-              <div className="mt-1">
+            {/* Password */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="password"
+                className="block text-xs font-semibold"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                Password
+              </label>
+              <div className="relative">
                 <input
                   id="password"
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-slate-700 rounded-md shadow-sm placeholder-slate-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-slate-950 text-white"
+                  className="w-full px-4 py-2.5 pr-11 rounded-xl text-sm focus:outline-none transition-all"
+                  style={inputStyle}
                   placeholder="••••••••"
+                  onFocus={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = "var(--accent)";
+                    (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 3px var(--accent-subtle)";
+                  }}
+                  onBlur={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
+                    (e.currentTarget as HTMLElement).style.boxShadow = "";
+                  }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 transition-colors"
+                  style={{ color: "var(--text-placeholder)" }}
+                  tabIndex={-1}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
               </div>
             </div>
 
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? "Signing in..." : "Sign in"}
-              </button>
-            </div>
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex justify-center items-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              style={{
+                backgroundColor: "var(--accent)",
+                color: "#ffffff",
+                boxShadow: "0 2px 8px -2px var(--accent)",
+              }}
+              onMouseEnter={(e) => {
+                if (!loading) (e.currentTarget as HTMLElement).style.backgroundColor = "var(--accent-hover)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.backgroundColor = "var(--accent)";
+              }}
+            >
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                "Sign in"
+              )}
+            </button>
           </form>
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-800" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-slate-900 text-slate-400">New to BIS Intelligence Assistant?</span>
-              </div>
-            </div>
-            <div className="mt-6">
-              <Link
-                href="/register"
-                className="w-full flex justify-center py-2 px-4 border border-slate-700 rounded-md shadow-sm text-sm font-medium text-slate-300 bg-slate-800 hover:bg-slate-700"
+          <div className="mt-6 text-center">
+            <div
+              className="relative flex items-center py-3"
+            >
+              <div
+                className="flex-1 border-t"
+                style={{ borderColor: "var(--border)" }}
+              />
+              <span
+                className="px-3 text-xs"
+                style={{ color: "var(--text-muted)", backgroundColor: "var(--surface-raised)" }}
               >
-                Create an account
-              </Link>
+                New user?
+              </span>
+              <div
+                className="flex-1 border-t"
+                style={{ borderColor: "var(--border)" }}
+              />
             </div>
+            <Link
+              href="/register"
+              className="block w-full py-2.5 px-4 rounded-xl text-sm font-semibold transition-all text-center"
+              style={{
+                backgroundColor: "var(--surface-overlay)",
+                border: "1px solid var(--border)",
+                color: "var(--text-secondary)",
+              }}
+            >
+              Create an account
+            </Link>
           </div>
         </div>
       </div>
@@ -139,7 +279,24 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div
+          className="min-h-screen flex items-center justify-center"
+          style={{ backgroundColor: "var(--surface-base)" }}
+        >
+          <div className="flex gap-1">
+            {[0, 150, 300].map((d) => (
+              <span
+                key={d}
+                className="w-2 h-2 rounded-full animate-bounce"
+                style={{ backgroundColor: "var(--accent)", animationDelay: `${d}ms` }}
+              />
+            ))}
+          </div>
+        </div>
+      }
+    >
       <LoginForm />
     </Suspense>
   );

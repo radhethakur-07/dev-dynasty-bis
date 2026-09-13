@@ -6,8 +6,15 @@ import { Language, ChatMessage } from "@/types/api";
 import { ChatArea } from "@/components/chat/ChatArea";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { ConversationSidebar } from "@/components/chat/ConversationSidebar";
-import { Shield, Sparkles } from "lucide-react";
-import { sendChatMessage, getUserSessions, createSession, deleteSession, renameSession, getSessionMessages } from "@/lib/api";
+import { Shield, Sparkles, PanelLeft } from "lucide-react";
+import {
+  sendChatMessage,
+  getUserSessions,
+  createSession,
+  deleteSession,
+  renameSession,
+  getSessionMessages,
+} from "@/lib/api";
 import {
   Conversation,
   getAllConversations,
@@ -33,22 +40,14 @@ function AssistantChat() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  // Controls the default value for the input (for populate-without-send)
+  const [pendingInput, setPendingInput] = useState("");
 
   useEffect(() => {
-    setSidebarOpen(window.innerWidth >= 768);
+    setSidebarOpen(window.innerWidth >= 1024);
   }, []);
 
-  const welcomeMessage = useCallback((): ChatMessage => ({
-    id: "msg-welcome",
-    role: "assistant",
-    content:
-      language === "hi"
-        ? "नमस्ते! मैं BIS इंटेलिजेंस असिस्टेंट हूँ। मैं भारतीय मानकों, प्रमाणन योजनाओं (ISI/CRS), हॉलमार्किंग और परीक्षण प्रयोगशालाओं में आपकी सहायता कर सकता हूँ।"
-        : "Hello! I am the BIS Intelligence Assistant. I can help you with Indian Standards, certification schemes (ISI/CRS), hallmarking, and testing laboratories. Ask me anything about BIS!",
-    timestamp: "Just now",
-  }), [language]);
-
-  // Load conversations from API or fallback
+  // Load conversations from API or fallback to localStorage
   useEffect(() => {
     async function loadData() {
       try {
@@ -57,7 +56,7 @@ function AssistantChat() {
           const mapped: Conversation[] = sessions.map((s: any) => ({
             id: s.id,
             title: s.title || "New Chat",
-            messages: [], // will load on select
+            messages: [],
             createdAt: s.created_at || new Date().toISOString(),
             updatedAt: s.created_at || new Date().toISOString(),
           }));
@@ -66,7 +65,7 @@ function AssistantChat() {
         } else {
           handleNewChat();
         }
-      } catch (err) {
+      } catch {
         // Fallback to local
         const convs = getAllConversations();
         setConversations(convs);
@@ -74,51 +73,54 @@ function AssistantChat() {
         if (savedActiveId && convs.find((c) => c.id === savedActiveId)) {
           setActiveConvId(savedActiveId);
           const conv = getConversation(savedActiveId);
-          if (conv && conv.messages.length > 0) {
-            setMessages(conv.messages);
-          } else {
-            setMessages([welcomeMessage()]);
-          }
+          setMessages(conv?.messages.length ? conv.messages.filter(m => m.id !== "msg-welcome") : []);
         } else if (convs.length > 0) {
           setActiveConvId(convs[0].id);
           setActiveConversationId(convs[0].id);
-          setMessages(convs[0].messages.length > 0 ? convs[0].messages : [welcomeMessage()]);
+          setMessages(convs[0].messages.filter(m => m.id !== "msg-welcome"));
         } else {
-          // Create first conversation
-          const conv = createConversation(welcomeMessage());
+          const conv = createConversation();
           setActiveConvId(conv.id);
-          setMessages([welcomeMessage()]);
+          setMessages([]);
           setConversations([conv]);
         }
       }
     }
     loadData();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Handle URL query param
+  // Handle URL query param — auto-send if present
   useEffect(() => {
-    if (queryParam && !initialQueryExecuted.current && activeConvId) {
+    if (queryParam && !initialQueryExecuted.current && activeConvId !== null) {
       initialQueryExecuted.current = true;
       handleSendMessage(queryParam);
     }
-  }, [queryParam, activeConvId]); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryParam, activeConvId]);
 
-  // Save messages to localStorage fallback
+  // Save messages to localStorage
   useEffect(() => {
     if (activeConvId && messages.length > 0) {
       try {
         updateConversation(activeConvId, messages);
-      } catch (e) {
-        // local storage may fail
+      } catch {
+        // localStorage may fail
       }
     }
   }, [messages, activeConvId]);
 
   const handleSendMessage = async (userText: string) => {
+    const trimmed = userText.trim();
+    if (!trimmed) return;
+
+    // Clear any pending input
+    setPendingInput("");
+
     const userMsg: ChatMessage = {
       id: "user-" + Date.now(),
       role: "user",
-      content: userText,
+      content: trimmed,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
@@ -131,7 +133,12 @@ function AssistantChat() {
         content: m.content || "",
       }));
 
-      const result = await sendChatMessage(userText, activeConvId || "session", language, historyPayload);
+      const result = await sendChatMessage(
+        trimmed,
+        activeConvId || "session",
+        language,
+        historyPayload
+      );
 
       let conversationalContent: string | undefined = undefined;
       if (result.response.type === "text") {
@@ -153,16 +160,18 @@ function AssistantChat() {
 
       setMessages((prev) => [...prev, assistantMsg]);
     } catch (err: unknown) {
-      const errorContent = err instanceof Error
-        ? `I'm sorry, I encountered an error processing your request. ${err.message.includes("timeout") || err.message.includes("Timeout") ? "The request timed out. Please try again." : "Please try again in a moment."}`
-        : "I'm sorry, something went wrong. Please try again.";
+      const isTimeout =
+        err instanceof Error &&
+        (err.message.includes("timeout") || err.message.includes("Timeout"));
 
       setMessages((prev) => [
         ...prev,
         {
           id: "error-" + Date.now(),
           role: "assistant",
-          content: errorContent,
+          content: isTimeout
+            ? "⚠️ The request timed out. The server may be busy — please try again in a moment."
+            : `⚠️ ${err instanceof Error ? err.message : "Something went wrong. Please try again."}`,
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         },
       ]);
@@ -177,18 +186,20 @@ function AssistantChat() {
       const newConv: Conversation = {
         id: s.id,
         title: "New Chat",
-        messages: [welcomeMessage()],
+        messages: [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      setConversations(prev => [newConv, ...prev]);
+      setConversations((prev) => [newConv, ...prev]);
       setActiveConvId(s.id);
-      setMessages([welcomeMessage()]);
-    } catch (err) {
-      const conv = createConversation(welcomeMessage());
+      setMessages([]);
+      setPendingInput("");
+    } catch {
+      const conv = createConversation();
       setActiveConvId(conv.id);
       setActiveConversationId(conv.id);
-      setMessages([welcomeMessage()]);
+      setMessages([]);
+      setPendingInput("");
       setConversations(getAllConversations());
     }
   };
@@ -197,6 +208,7 @@ function AssistantChat() {
     setActiveConvId(id);
     setActiveConversationId(id);
     setMessages([]);
+    setPendingInput("");
     try {
       const msgs = await getSessionMessages(id);
       if (msgs && msgs.length > 0) {
@@ -204,27 +216,30 @@ function AssistantChat() {
           id: m.id,
           role: m.role,
           content: m.content,
-          timestamp: new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          timestamp: new Date(m.created_at).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
         }));
         setMessages(mapped);
       } else {
-        setMessages([welcomeMessage()]);
+        setMessages([]);
       }
-    } catch (err) {
+    } catch {
       const conv = getConversation(id);
-      setMessages(conv?.messages.length ? conv.messages : [welcomeMessage()]);
+      setMessages(conv?.messages.filter(m => m.id !== "msg-welcome") ?? []);
     }
   };
 
   const handleDeleteConversation = async (id: string) => {
     try {
       await deleteSession(id);
-      setConversations(prev => prev.filter(c => c.id !== id));
+      setConversations((prev) => prev.filter((c) => c.id !== id));
       if (id === activeConvId) {
         setMessages([]);
         handleNewChat();
       }
-    } catch (err) {
+    } catch {
       localDeleteConversation(id);
       const remaining = getAllConversations();
       setConversations(remaining);
@@ -241,15 +256,28 @@ function AssistantChat() {
   const handleRenameConversation = async (id: string, title: string) => {
     try {
       await renameSession(id, title);
-      setConversations(prev => prev.map(c => c.id === id ? { ...c, title } : c));
-    } catch (err) {
+      setConversations((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, title } : c))
+      );
+    } catch {
       localRenameConversation(id, title);
       setConversations(getAllConversations());
     }
   };
 
+  // Populate input without sending (for empty state suggestion chips)
+  const handlePopulateInput = (text: string) => {
+    setPendingInput(text);
+  };
+
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-slate-50 dark:bg-gradient-to-b dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div
+      className="flex overflow-hidden"
+      style={{
+        height: "calc(100vh - 4rem)",
+        backgroundColor: "var(--surface-base)",
+      }}
+    >
       {/* Conversation Sidebar */}
       <ConversationSidebar
         conversations={conversations}
@@ -262,37 +290,104 @@ function AssistantChat() {
         onToggle={() => setSidebarOpen(!sidebarOpen)}
       />
 
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col min-w-0 bg-slate-50/50 dark:bg-transparent">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800/60 bg-white/90 dark:bg-slate-950/80 backdrop-blur-sm shadow-sm">
-          <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-blue-500" />
-            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">BIS Intelligence Assistant</h1>
-            <span className="px-2 py-0.5 rounded-full text-[10px] bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-              SIH267107
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-500 dark:text-amber-400" />
-              <span className="text-xs text-slate-500 hidden sm:inline font-medium">Powered by Gemini</span>
+      {/* Main Chat Column */}
+      <div
+        className="flex-1 flex flex-col min-w-0"
+        style={{ backgroundColor: "var(--surface-base)" }}
+      >
+        {/* Chat header bar */}
+        <div
+          className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0"
+          style={{
+            backgroundColor: "var(--surface-raised)",
+            borderColor: "var(--border)",
+          }}
+        >
+          <div className="flex items-center gap-3">
+            {/* Sidebar toggle — always visible */}
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors flex-shrink-0"
+              style={{
+                backgroundColor: "var(--surface-overlay)",
+                border: "1px solid var(--border)",
+                color: "var(--text-muted)",
+              }}
+              aria-label={sidebarOpen ? "Close conversation history" : "Open conversation history"}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.color = "var(--text-primary)";
+                (e.currentTarget as HTMLElement).style.backgroundColor = "var(--border)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.color = "var(--text-muted)";
+                (e.currentTarget as HTMLElement).style.backgroundColor = "var(--surface-overlay)";
+              }}
+            >
+              <PanelLeft className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-2.5">
+              <div
+                className="w-7 h-7 rounded-lg flex items-center justify-center"
+                style={{
+                  background: "linear-gradient(135deg, #1d4ed8, #3b82f6)",
+                }}
+              >
+                <Shield className="w-3.5 h-3.5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-sm font-semibold leading-none" style={{ color: "var(--text-primary)" }}>
+                  BIS Intelligence Assistant
+                </h1>
+                <p className="text-[10px] leading-none mt-0.5" style={{ color: "var(--text-placeholder)" }}>
+                  Grounded knowledge · 753+ Indian Standards
+                </p>
+              </div>
             </div>
-            <button onClick={logout} className="text-xs text-slate-500 hover:text-red-500 font-medium transition-colors">
-              Logout
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 text-xs hidden sm:flex" style={{ color: "var(--text-muted)" }}>
+              <Sparkles className="w-3.5 h-3.5" style={{ color: "#f59e0b" }} />
+              <span>Powered by Gemini</span>
+            </div>
+            <button
+              type="button"
+              onClick={logout}
+              className="text-xs font-medium transition-colors px-2.5 py-1 rounded-lg"
+              style={{ color: "var(--text-muted)" }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.color = "var(--error)";
+                (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(220, 38, 38, 0.08)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.color = "var(--text-muted)";
+                (e.currentTarget as HTMLElement).style.backgroundColor = "";
+              }}
+            >
+              Sign out
             </button>
           </div>
         </div>
 
-        {/* Messages */}
-        <ChatArea messages={messages} isLoading={isLoading} onQuickPrompt={handleSendMessage} />
+        {/* Message area */}
+        <ChatArea
+          messages={messages}
+          isLoading={isLoading}
+          language={language}
+          onQuickPrompt={handleSendMessage}
+          onPopulateInput={handlePopulateInput}
+        />
 
         {/* Input */}
         <ChatInput
           onSendMessage={handleSendMessage}
+          onPopulateInput={handlePopulateInput}
           isLoading={isLoading}
           language={language}
-          onLanguageChange={() => setLanguage((prev) => (prev === "en" ? "hi" : "en"))}
+          onLanguageChange={(lang) => setLanguage(lang)}
+          defaultValue={pendingInput}
         />
       </div>
     </div>
@@ -301,7 +396,37 @@ function AssistantChat() {
 
 export default function AssistantPage() {
   return (
-    <Suspense fallback={<div className="h-screen bg-slate-950 flex items-center justify-center text-slate-500">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div
+          className="h-screen flex items-center justify-center"
+          style={{ backgroundColor: "var(--surface-base)" }}
+        >
+          <div className="flex flex-col items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-2xl flex items-center justify-center"
+              style={{ background: "linear-gradient(135deg, #1d4ed8, #3b82f6)" }}
+            >
+              <Shield className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex gap-1">
+              <span
+                className="w-2 h-2 rounded-full animate-bounce"
+                style={{ backgroundColor: "var(--accent)", animationDelay: "0ms" }}
+              />
+              <span
+                className="w-2 h-2 rounded-full animate-bounce"
+                style={{ backgroundColor: "var(--accent)", animationDelay: "150ms" }}
+              />
+              <span
+                className="w-2 h-2 rounded-full animate-bounce"
+                style={{ backgroundColor: "var(--accent)", animationDelay: "300ms" }}
+              />
+            </div>
+          </div>
+        </div>
+      }
+    >
       <AssistantChat />
     </Suspense>
   );

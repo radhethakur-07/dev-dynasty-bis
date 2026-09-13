@@ -2,170 +2,376 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   FONTS
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* ============================================================
+   CSS CUSTOM PROPERTIES — THE DESIGN SYSTEM
+   ============================================================ */
 :root {
-  --foreground-rgb: 248, 250, 252;
-  --background-start-rgb: 8, 12, 20;
-  --background-end-rgb: 15, 23, 42;
+  /* Surfaces */
+  --surface-base:     #f8fafc;
+  --surface-raised:   #ffffff;
+  --surface-overlay:  #f1f5f9;
+  --surface-subtle:   #f0f4f8;
+
+  /* Borders */
+  --border:           #e2e8f0;
+  --border-subtle:    #f1f5f9;
+  --border-strong:    #cbd5e1;
+
+  /* Text */
+  --text-primary:     #0f172a;
+  --text-secondary:   #334155;
+  --text-muted:       #64748b;
+  --text-placeholder: #94a3b8;
+
+  /* Brand */
+  --accent:           #2563eb;
+  --accent-hover:     #1d4ed8;
+  --accent-subtle:    rgba(37, 99, 235, 0.08);
+  --accent-border:    rgba(37, 99, 235, 0.2);
+
+  /* Status */
+  --success:          #059669;
+  --warning:          #d97706;
+  --error:            #dc2626;
+  --info:             #0284c7;
+
+  /* Chat */
+  --chat-user-bg:     #2563eb;
+  --chat-user-text:   #ffffff;
+  --chat-ai-bg:       #ffffff;
+  --chat-ai-border:   #e2e8f0;
+  --chat-ai-text:     #0f172a;
+
+  /* Sidebar */
+  --sidebar-bg:       #ffffff;
+  --sidebar-border:   #e2e8f0;
+  --sidebar-hover:    #f8fafc;
+  --sidebar-active-bg: #eff6ff;
+  --sidebar-active-border: #bfdbfe;
+  --sidebar-active-text: #1d4ed8;
+}
+
+.dark {
+  /* Surfaces */
+  --surface-base:     #080c14;
+  --surface-raised:   #0d1424;
+  --surface-overlay:  #111827;
+  --surface-subtle:   #0f172a;
+
+  /* Borders */
+  --border:           #1e293b;
+  --border-subtle:    #162032;
+  --border-strong:    #334155;
+
+  /* Text */
+  --text-primary:     #f1f5f9;
+  --text-secondary:   #cbd5e1;
+  --text-muted:       #94a3b8;
+  --text-placeholder: #475569;
+
+  /* Brand */
+  --accent:           #3b82f6;
+  --accent-hover:     #60a5fa;
+  --accent-subtle:    rgba(59, 130, 246, 0.1);
+  --accent-border:    rgba(59, 130, 246, 0.2);
+
+  /* Status */
+  --success:          #10b981;
+  --warning:          #f59e0b;
+  --error:            #f87171;
+  --info:             #38bdf8;
+
+  /* Chat */
+  --chat-user-bg:     #1d4ed8;
+  --chat-user-text:   #ffffff;
+  --chat-ai-bg:       #0d1424;
+  --chat-ai-border:   #1e293b;
+  --chat-ai-text:     #e2e8f0;
+
+  /* Sidebar */
+  --sidebar-bg:       #080c14;
+  --sidebar-border:   #1e293b;
+  --sidebar-hover:    #0d1424;
+  --sidebar-active-bg: rgba(37, 99, 235, 0.12);
+  --sidebar-active-border: rgba(59, 130, 246, 0.3);
+  --sidebar-active-text: #93c5fd;
+}
+
+/* ============================================================
+   BASE STYLES
+   ============================================================ */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: #080c14;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+  font-variation-settings: "slnt" 0;
+  background-color: var(--surface-base);
+  color: var(--text-primary);
   min-height: 100vh;
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.2s ease, color 0.15s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* ============================================================
-   LIGHT THEME OVERRIDES (when html has .light or not .dark)
+   SCROLLBARS
    ============================================================ */
-
-html:not(.dark) {
-  --foreground-rgb: 15, 23, 42;
-}
-
-html:not(.dark) body {
-  background-color: #f8fafc !important;
-  color: #0f172a !important;
-}
-
-/* Header & Nav in Light Mode */
-html:not(.dark) header {
-  background-color: rgba(255, 255, 255, 0.9) !important;
-  border-color: #e2e8f0 !important;
-}
-
-/* Background layers & sections in Light Mode */
-html:not(.dark) .bg-slate-950,
-html:not(.dark) .bg-slate-950\/80,
-html:not(.dark) .bg-slate-950\/60,
-html:not(.dark) .bg-slate-950\/40 {
-  background-color: #f8fafc !important;
-}
-
-html:not(.dark) .bg-slate-900,
-html:not(.dark) .bg-slate-900\/90,
-html:not(.dark) .bg-slate-900\/80,
-html:not(.dark) .bg-slate-900\/60,
-html:not(.dark) .bg-slate-900\/50,
-html:not(.dark) .bg-slate-900\/40,
-html:not(.dark) .bg-slate-900\/30 {
-  background-color: #ffffff !important;
-}
-
-html:not(.dark) .bg-slate-800,
-html:not(.dark) .bg-slate-800\/80,
-html:not(.dark) .bg-slate-800\/60,
-html:not(.dark) .bg-slate-800\/40 {
-  background-color: #f1f5f9 !important;
-}
-
-/* Borders in Light Mode */
-html:not(.dark) .border-slate-900,
-html:not(.dark) .border-slate-800,
-html:not(.dark) .border-slate-800\/80,
-html:not(.dark) .border-slate-700,
-html:not(.dark) .border-slate-700\/80,
-html:not(.dark) .border-slate-700\/60 {
-  border-color: #e2e8f0 !important;
-}
-
-/* Text Colors in Light Mode */
-html:not(.dark) .text-slate-100,
-html:not(.dark) .text-slate-200 {
-  color: #0f172a !important;
-}
-
-html:not(.dark) .text-slate-300 {
-  color: #334155 !important;
-}
-
-html:not(.dark) .text-slate-400 {
-  color: #475569 !important;
-}
-
-html:not(.dark) .text-slate-500 {
-  color: #64748b !important;
-}
-
-/* Input boxes & Textareas in Light Mode */
-html:not(.dark) input,
-html:not(.dark) textarea,
-html:not(.dark) select {
-  background-color: #ffffff !important;
-  color: #0f172a !important;
-  border-color: #cbd5e1 !important;
-}
-
-html:not(.dark) input::placeholder,
-html:not(.dark) textarea::placeholder {
-  color: #94a3b8 !important;
-}
-
-/* Cards & Drawers in Light Mode */
-html:not(.dark) .prose-invert {
-  color: #1e293b !important;
-}
-
-html:not(.dark) .prose-invert code {
-  background-color: #f1f5f9 !important;
-  color: #0f172a !important;
-}
-
-html:not(.dark) .prose-invert pre {
-  background-color: #f8fafc !important;
-  border-color: #e2e8f0 !important;
-  color: #0f172a !important;
-}
-
-/* Footer in Light Mode */
-html:not(.dark) footer {
-  background-color: #f1f5f9 !important;
-  border-color: #e2e8f0 !important;
-}
-
-/* Scrollbars in Light Mode */
-html:not(.dark) ::-webkit-scrollbar-track {
-  background: #f8fafc;
-}
-
-html:not(.dark) ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-}
-
-html:not(.dark) ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-/* ============================================================
-   DARK THEME SCROLLBAR & DEFAULTS
-   ============================================================ */
-
-/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #080c14;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: var(--border-strong);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: var(--text-placeholder);
 }
 
-/* Markdown rendering fixes */
-.prose a { word-break: break-all; }
-.prose pre { overflow-x: auto; max-width: 100%; }
-.prose table { display: block; overflow-x: auto; max-width: 100%; }
-.prose img { max-width: 100%; height: auto; }
-.overflow-wrap-anywhere { overflow-wrap: anywhere; }
+/* ============================================================
+   TYPOGRAPHY UTILITIES
+   ============================================================ */
+.font-mono {
+  font-family: "JetBrains Mono", Menlo, Monaco, Consolas, monospace;
+}
 
-/* Chat bubble overflow protection */
-.break-words { word-break: break-word; overflow-wrap: anywhere; }
+/* ============================================================
+   PROSE (MARKDOWN RENDERING)
+   ============================================================ */
+.prose {
+  color: var(--text-primary);
+  max-width: none;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  color: var(--text-primary);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+}
+
+.prose h1 { font-size: 1.25rem; }
+.prose h2 { font-size: 1.1rem; }
+.prose h3 { font-size: 1rem; }
+.prose h4 { font-size: 0.9rem; }
+
+.prose p {
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 0.75em;
+}
+
+.prose strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.prose em {
+  color: var(--text-secondary);
+}
+
+.prose ul, .prose ol {
+  color: var(--text-secondary);
+  padding-left: 1.5em;
+  margin-bottom: 0.75em;
+  space-y: 0.25em;
+}
+
+.prose li {
+  margin-bottom: 0.3em;
+  line-height: 1.6;
+}
+
+.prose li::marker {
+  color: var(--accent);
+}
+
+.prose ol li::marker {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.prose code {
+  font-family: "JetBrains Mono", Menlo, monospace;
+  font-size: 0.82em;
+  background: var(--surface-overlay);
+  color: var(--accent);
+  padding: 0.15em 0.4em;
+  border-radius: 0.25rem;
+  border: 1px solid var(--border);
+  font-weight: 500;
+}
+
+.prose pre {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  overflow-x: auto;
+  max-width: 100%;
+  margin-bottom: 1em;
+}
+
+.prose pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.prose blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 1em;
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 1em 0;
+}
+
+.prose table {
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin-bottom: 1em;
+}
+
+.prose thead {
+  background: var(--surface-overlay);
+  border-bottom: 2px solid var(--border);
+}
+
+.prose th {
+  color: var(--text-primary);
+  font-weight: 600;
+  padding: 0.6em 0.8em;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.prose td {
+  color: var(--text-secondary);
+  padding: 0.5em 0.8em;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.prose tr:last-child td {
+  border-bottom: none;
+}
+
+.prose a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  word-break: break-all;
+}
+
+.prose a:hover {
+  color: var(--accent-hover);
+}
+
+.prose hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.5em 0;
+}
+
+.prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+/* ============================================================
+   FOCUS STYLES
+   ============================================================ */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+/* ============================================================
+   OVERFLOW UTILITIES
+   ============================================================ */
+.break-anywhere { overflow-wrap: anywhere; word-break: break-word; }
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* ============================================================
+   TEXTAREA AUTO-RESIZE
+   ============================================================ */
+textarea.auto-resize {
+  resize: none;
+  overflow: hidden;
+  min-height: 44px;
+}
+
+/* ============================================================
+   LOADING SKELETONS
+   ============================================================ */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-overlay) 25%,
+    var(--border) 50%,
+    var(--surface-overlay) 75%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s linear infinite;
+  border-radius: 0.375rem;
+}
+
+/* ============================================================
+   TRANSITIONS
+   ============================================================ */
+.transition-base {
+  transition: all 0.15s ease;
+}
+
+/* ============================================================
+   CHAT SPECIFIC
+   ============================================================ */
+.chat-message-user {
+  background-color: var(--chat-user-bg);
+  color: var(--chat-user-text);
+}
+
+.chat-message-ai {
+  background-color: var(--chat-ai-bg);
+  border-color: var(--chat-ai-border);
+  color: var(--chat-ai-text);
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

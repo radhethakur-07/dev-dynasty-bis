@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Mic, MicOff, AlertCircle, Loader2 } from "lucide-react";
+import { Mic, AlertCircle } from "lucide-react";
 import { Language } from "@/types/api";
-import { useSpeechRecognition, mapLanguageToLocale } from "@/lib/useSpeechRecognition";
+import { useSpeechRecognition } from "@/lib/useSpeechRecognition";
 
 export interface VoiceInputButtonProps {
   onTranscript: (text: string, isFinal: boolean) => void;
@@ -26,23 +26,17 @@ export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
 }) => {
   const [showToast, setShowToast] = useState<boolean>(false);
 
-  const {
-    isSupported,
-    isListening,
-    errorMessage,
-    toggleListening,
-    clearError,
-  } = useSpeechRecognition({
-    language,
-    onResult: (text, isFinal) => {
-      onTranscript(text, isFinal);
-    },
-    onError: () => {
-      setShowToast(true);
-    },
-  });
+  const { isSupported, isListening, errorMessage, toggleListening, clearError } =
+    useSpeechRecognition({
+      language,
+      onResult: (text, isFinal) => {
+        onTranscript(text, isFinal);
+      },
+      onError: () => {
+        setShowToast(true);
+      },
+    });
 
-  // Automatically dismiss error toast after 4 seconds
   useEffect(() => {
     if (showToast) {
       const timer = setTimeout(() => {
@@ -70,27 +64,41 @@ export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
 
   return (
     <div className={`relative inline-flex items-center ${className}`}>
-      {/* Listening Feedback Badge / Pill */}
+      {/* Listening Indicator Badge */}
       {isListening && showFeedbackBadge && (
-        <div className="absolute -top-8 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-950/90 border border-red-500/40 text-[11px] font-semibold text-red-300 shadow-xl backdrop-blur-sm whitespace-nowrap animate-pulse">
+        <div
+          className={`absolute ${
+            tooltipPosition === "top" ? "-top-9" : "-bottom-9"
+          } left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold shadow-lg backdrop-blur-sm whitespace-nowrap`}
+          style={{
+            backgroundColor: "rgba(220, 38, 38, 0.15)",
+            border: "1px solid rgba(220, 38, 38, 0.3)",
+            color: "#f87171",
+          }}
+        >
           <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-ping" />
           <span>Listening ({langLabel})...</span>
         </div>
       )}
 
-      {/* Error / Permission Toast */}
+      {/* Error Toast */}
       {showToast && errorMessage && (
         <div
           className={`absolute ${
             tooltipPosition === "top" ? "-top-12" : "-bottom-12"
-          } left-1/2 -translate-x-1/2 z-40 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-amber-500/40 text-[11px] text-amber-300 shadow-2xl backdrop-blur-md max-w-xs whitespace-normal text-center`}
+          } left-1/2 -translate-x-1/2 z-40 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] shadow-2xl backdrop-blur-md max-w-xs whitespace-normal text-center`}
+          style={{
+            backgroundColor: "var(--surface-overlay)",
+            border: "1px solid rgba(217, 119, 6, 0.3)",
+            color: "#f59e0b",
+          }}
         >
-          <AlertCircle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+          <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
           <span>{errorMessage}</span>
         </div>
       )}
 
-      {/* Main Microphone Action Button */}
+      {/* Main Button */}
       <button
         type="button"
         onClick={handleClick}
@@ -104,21 +112,52 @@ export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
           !isSupported
             ? "Voice input not supported in this browser"
             : isListening
-            ? "Listening... Click to stop"
-            : `Voice Input (${langLabel}) — Click and speak`
+            ? "Listening — click to stop"
+            : `Voice input (${langLabel}) — click and speak`
         }
-        className={`relative p-2 rounded-xl transition-all duration-200 flex items-center justify-center flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed ${
+        className={`relative flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 ${buttonClassName}`}
+        style={
           isListening
-            ? "bg-red-500/20 text-red-400 border border-red-500/50 shadow-md shadow-red-500/20 ring-2 ring-red-500/30"
+            ? {
+                backgroundColor: "rgba(220, 38, 38, 0.15)",
+                border: "1px solid rgba(220, 38, 38, 0.4)",
+                color: "#f87171",
+                boxShadow: "0 0 12px -3px rgba(220, 38, 38, 0.3)",
+              }
             : !isSupported
-            ? "bg-slate-800/40 text-slate-500 hover:text-slate-400 border border-slate-800"
-            : "bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-blue-400 border border-slate-700/60 hover:border-blue-500/40"
-        } ${buttonClassName}`}
+            ? {
+                backgroundColor: "var(--surface-overlay)",
+                border: "1px solid var(--border)",
+                color: "var(--text-placeholder)",
+              }
+            : {
+                backgroundColor: "var(--surface-overlay)",
+                border: "1px solid var(--border)",
+                color: "var(--text-muted)",
+              }
+        }
+        onMouseEnter={(e) => {
+          if (!isListening && isSupported && !disabled) {
+            (e.currentTarget as HTMLElement).style.color = "var(--accent)";
+            (e.currentTarget as HTMLElement).style.borderColor = "var(--accent-border)";
+            (e.currentTarget as HTMLElement).style.backgroundColor = "var(--accent-subtle)";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isListening && isSupported && !disabled) {
+            (e.currentTarget as HTMLElement).style.color = "var(--text-muted)";
+            (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
+            (e.currentTarget as HTMLElement).style.backgroundColor = "var(--surface-overlay)";
+          }
+        }}
       >
         {isListening ? (
           <>
-            <Mic className="w-4 h-4 text-red-400 animate-pulse" />
-            <span className="absolute inset-0 rounded-xl bg-red-500/10 animate-ping pointer-events-none" />
+            <Mic className="w-4 h-4 animate-pulse" />
+            <span
+              className="absolute inset-0 rounded-xl animate-ping pointer-events-none"
+              style={{ backgroundColor: "rgba(220, 38, 38, 0.15)" }}
+            />
           </>
         ) : (
           <Mic className="w-4 h-4" />

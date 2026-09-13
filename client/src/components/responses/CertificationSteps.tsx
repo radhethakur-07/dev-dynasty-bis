@@ -1,20 +1,23 @@
+"use client";
+
 import React, { useState } from "react";
 import { CertificationGuidanceResponse } from "@/types/api";
-import { 
-  Award, 
-  CheckCircle, 
-  FileText, 
-  AlertCircle, 
-  ShieldCheck, 
-  Microscope, 
-  BookOpen, 
-  ExternalLink, 
-  ChevronDown, 
-  ChevronUp, 
-  Layers, 
+import {
+  Award,
+  CheckCircle,
+  FileText,
+  AlertCircle,
+  ShieldCheck,
+  Microscope,
+  BookOpen,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+  Layers,
   Info,
-  Database
+  Database,
 } from "lucide-react";
+import { CitationPanel } from "./CitationPanel";
 
 interface CertificationStepsProps {
   data: CertificationGuidanceResponse;
@@ -24,73 +27,116 @@ export const CertificationSteps: React.FC<CertificationStepsProps> = ({ data }) 
   const [sourcesOpen, setSourcesOpen] = useState(false);
 
   return (
-    <div className="space-y-6">
-      {/* Header Info */}
-      <div className="p-5 rounded-2xl border border-blue-900/50 bg-gradient-to-br from-blue-950/40 via-slate-900/60 to-slate-950/80 shadow-lg space-y-3">
+    <div className="space-y-5">
+      {/* Header card */}
+      <div
+        className="p-5 rounded-2xl space-y-3"
+        style={{
+          background: "linear-gradient(135deg, var(--accent-subtle) 0%, var(--surface-raised) 100%)",
+          border: "1px solid var(--accent-border)",
+        }}
+      >
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-300 text-xs font-semibold tracking-wide">
-            <Award className="w-4 h-4 text-blue-400" />
-            <span>{data.scheme_name}</span>
-          </div>
+          <span
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold"
+            style={{
+              backgroundColor: "var(--accent-subtle)",
+              color: "var(--accent)",
+              border: "1px solid var(--accent-border)",
+            }}
+          >
+            <Award className="w-3.5 h-3.5" />
+            {data.scheme_name}
+          </span>
 
           {data.product && (
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-slate-800 text-slate-300 text-xs font-medium border border-slate-700">
-              <span className="text-slate-400">Target:</span>
-              <strong className="text-slate-100">{data.product}</strong>
-            </div>
+            <span
+              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-medium"
+              style={{
+                backgroundColor: "var(--surface-overlay)",
+                border: "1px solid var(--border)",
+                color: "var(--text-secondary)",
+              }}
+            >
+              <span style={{ color: "var(--text-muted)" }}>Target:</span>
+              <strong style={{ color: "var(--text-primary)" }}>{data.product}</strong>
+            </span>
           )}
         </div>
 
-        <h3 className="text-lg font-bold text-slate-100">
-          Official Certification Pathway & Compliance Requirements
+        <h3 className="text-base font-bold" style={{ color: "var(--text-primary)" }}>
+          Official Certification Pathway
         </h3>
-        
-        <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+
+        <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
           {data.summary}
         </p>
 
-        {/* Evidence & Retrieval Summary */}
         {data.retrieval_summary && (
-          <div className="flex items-center gap-2 pt-2 text-xs text-blue-300/90 font-medium">
-            <Database className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+          <div className="flex items-center gap-2 pt-1 text-xs" style={{ color: "var(--accent)" }}>
+            <Database className="w-3.5 h-3.5 flex-shrink-0" />
             <span>{data.retrieval_summary}</span>
           </div>
         )}
       </div>
 
-      {/* Demo Notice if applicable */}
+      {/* Demo notice */}
       {data.is_demo && (
-        <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-medium">
+        <div
+          className="flex items-center gap-2 p-3 rounded-xl text-xs font-medium"
+          style={{
+            backgroundColor: "rgba(217, 119, 6, 0.08)",
+            border: "1px solid rgba(217, 119, 6, 0.2)",
+            color: "var(--warning)",
+          }}
+        >
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
-          <span>Notice: Guidance compiled using {data.demo_badge || "Demo / Sample / Not official"} documentation records.</span>
+          <span>Guidance from {data.demo_badge || "Demo / Sample"} documentation</span>
         </div>
       )}
 
-      {/* Section: Purpose & Applicability (Conditional) */}
+      {/* Applicability */}
       {data.applicability && (
-        <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/40 space-y-2">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-200 uppercase tracking-wider">
-            <Layers className="w-4 h-4 text-blue-400" />
-            <span>Scheme Purpose & Regulatory Applicability</span>
+        <div
+          className="p-4 rounded-xl space-y-2"
+          style={{
+            backgroundColor: "var(--surface-raised)",
+            border: "1px solid var(--border)",
+          }}
+        >
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+            <Layers className="w-4 h-4" style={{ color: "var(--accent)" }} />
+            Scheme Purpose &amp; Applicability
           </div>
-          <p className="text-xs text-slate-300 leading-relaxed">
+          <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
             {data.applicability}
           </p>
         </div>
       )}
 
-      {/* Section: Applicable Products / Standards (Conditional) */}
+      {/* Applicable Products */}
       {data.applicable_products_or_standards && data.applicable_products_or_standards.length > 0 && (
-        <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/40 space-y-2.5">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-200 uppercase tracking-wider">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>Applicable Products / Indian Standards (Verified Scope)</span>
+        <div
+          className="p-4 rounded-xl space-y-2.5"
+          style={{
+            backgroundColor: "var(--surface-raised)",
+            border: "1px solid var(--border)",
+          }}
+        >
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+            <ShieldCheck className="w-4 h-4" style={{ color: "var(--success)" }} />
+            Applicable Products / Standards
           </div>
-          <div className="flex flex-wrap gap-2 pt-1">
+          <div className="flex flex-wrap gap-2">
             {data.applicable_products_or_standards.map((prod, idx) => (
               <span
                 key={idx}
-                className="px-2.5 py-1 rounded-lg bg-slate-800/90 border border-slate-700/80 text-slate-200 text-xs font-medium"
+                className="px-2.5 py-1 rounded-lg text-xs font-medium"
+                style={{
+                  backgroundColor: "var(--surface-overlay)",
+                  border: "1px solid var(--border)",
+                  color: "var(--text-secondary)",
+                }}
               >
                 {prod}
               </span>
@@ -99,44 +145,85 @@ export const CertificationSteps: React.FC<CertificationStepsProps> = ({ data }) 
         </div>
       )}
 
-      {/* Section: Testing & Assessment Information (Conditional) */}
+      {/* Testing & Assessment */}
       {data.testing_and_assessment && (
-        <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/40 space-y-2">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-200 uppercase tracking-wider">
-            <Microscope className="w-4 h-4 text-purple-400" />
-            <span>Testing & Conformity Assessment Model</span>
+        <div
+          className="p-4 rounded-xl space-y-2"
+          style={{
+            backgroundColor: "var(--surface-raised)",
+            border: "1px solid var(--border)",
+          }}
+        >
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+            <Microscope className="w-4 h-4" style={{ color: "#8b5cf6" }} />
+            Testing &amp; Conformity Assessment
           </div>
-          <p className="text-xs text-slate-300 leading-relaxed">
+          <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
             {data.testing_and_assessment}
           </p>
         </div>
       )}
 
-      {/* Section: Step-by-Step Process Timeline */}
+      {/* Steps timeline */}
       {data.steps && data.steps.length > 0 && (
         <div className="space-y-3">
-          <div className="text-xs font-bold text-slate-300 uppercase tracking-wider px-1">
-            <span>Certification Process & Stages</span>
-          </div>
+          <h4 className="text-xs font-bold uppercase tracking-wider px-1" style={{ color: "var(--text-muted)" }}>
+            Certification Process
+          </h4>
 
-          <div className="relative pl-6 space-y-4 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-800">
+          <div className="relative pl-7 space-y-3">
+            {/* Timeline line */}
+            <div
+              className="absolute left-3.5 top-2 bottom-2 w-px"
+              style={{ backgroundColor: "var(--border)" }}
+            />
+
             {data.steps.map((step) => (
-              <div key={step.step_number} className="relative group">
-                {/* Step marker */}
-                <div className="absolute -left-6 top-1 w-5 h-5 rounded-full bg-slate-900 border-2 border-blue-500 text-blue-400 flex items-center justify-center text-[10px] font-bold">
+              <div key={step.step_number} className="relative">
+                {/* Step dot */}
+                <div
+                  className="absolute -left-7 top-1.5 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold z-10"
+                  style={{
+                    backgroundColor: "var(--surface-raised)",
+                    border: "2px solid var(--accent)",
+                    color: "var(--accent)",
+                  }}
+                >
                   {step.step_number}
                 </div>
 
-                <div className="p-4 rounded-xl border border-slate-800/80 bg-slate-900/50 hover:bg-slate-900/80 transition-colors space-y-1.5">
-                  <h4 className="text-xs sm:text-sm font-bold text-slate-100 flex items-center gap-2">
-                    <span>{step.title}</span>
+                <div
+                  className="p-4 rounded-xl space-y-1.5 transition-all duration-150"
+                  style={{
+                    backgroundColor: "var(--surface-raised)",
+                    border: "1px solid var(--border)",
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = "var(--accent-border)";
+                    (e.currentTarget as HTMLElement).style.backgroundColor = "var(--surface-overlay)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
+                    (e.currentTarget as HTMLElement).style.backgroundColor = "var(--surface-raised)";
+                  }}
+                >
+                  <h4 className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
+                    {step.title}
                   </h4>
-                  <p className="text-xs text-slate-300 leading-relaxed">
+                  <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
                     {step.description}
                   </p>
                   {step.important_notes && (
-                    <div className="mt-2 text-[11px] text-amber-300/90 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded">
-                      <strong>Note:</strong> {step.important_notes}
+                    <div
+                      className="mt-2 text-[11px] px-3 py-2 rounded-lg"
+                      style={{
+                        backgroundColor: "rgba(217, 119, 6, 0.08)",
+                        border: "1px solid rgba(217, 119, 6, 0.2)",
+                        color: "var(--warning)",
+                      }}
+                    >
+                      <strong>Note: </strong>
+                      {step.important_notes}
                     </div>
                   )}
                 </div>
@@ -146,17 +233,34 @@ export const CertificationSteps: React.FC<CertificationStepsProps> = ({ data }) 
         </div>
       )}
 
-      {/* Section: Required Documents Checklist (Conditional) */}
+      {/* Required Documents */}
       {data.required_documents && data.required_documents.length > 0 && (
-        <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/40 space-y-3">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-200 uppercase tracking-wider">
-            <FileText className="w-4 h-4 text-emerald-400" />
-            <span>Essential Documentation Checklist</span>
+        <div
+          className="p-4 rounded-xl space-y-3"
+          style={{
+            backgroundColor: "var(--surface-raised)",
+            border: "1px solid var(--border)",
+          }}
+        >
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+            <FileText className="w-4 h-4" style={{ color: "var(--success)" }} />
+            Required Documents Checklist
           </div>
-          <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-slate-300">
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {data.required_documents.map((doc, idx) => (
-              <li key={idx} className="flex items-start gap-2 p-2 rounded-lg bg-slate-950/50 border border-slate-800/60">
-                <CheckCircle className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0 mt-0.5" />
+              <li
+                key={idx}
+                className="flex items-start gap-2 p-2.5 rounded-lg text-xs"
+                style={{
+                  backgroundColor: "var(--surface-overlay)",
+                  border: "1px solid var(--border)",
+                  color: "var(--text-secondary)",
+                }}
+              >
+                <CheckCircle
+                  className="w-3.5 h-3.5 flex-shrink-0 mt-0.5"
+                  style={{ color: "var(--success)" }}
+                />
                 <span>{doc}</span>
               </li>
             ))}
@@ -164,14 +268,20 @@ export const CertificationSteps: React.FC<CertificationStepsProps> = ({ data }) 
         </div>
       )}
 
-      {/* Section: Important Regulatory Notes (Conditional) */}
+      {/* Important notes */}
       {data.important_notes && data.important_notes.length > 0 && (
-        <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-950/15 space-y-2">
-          <div className="flex items-center gap-2 text-xs font-bold text-amber-300 uppercase tracking-wider">
-            <Info className="w-4 h-4 text-amber-400" />
-            <span>Important Compliance Notes & Penalties</span>
+        <div
+          className="p-4 rounded-xl space-y-2"
+          style={{
+            backgroundColor: "rgba(217, 119, 6, 0.06)",
+            border: "1px solid rgba(217, 119, 6, 0.2)",
+          }}
+        >
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--warning)" }}>
+            <Info className="w-4 h-4" />
+            Important Compliance Notes
           </div>
-          <ul className="space-y-1.5 text-xs text-amber-200/90 list-disc pl-5">
+          <ul className="space-y-1.5 text-xs list-disc pl-5" style={{ color: "var(--text-secondary)" }}>
             {data.important_notes.map((note, idx) => (
               <li key={idx}>{note}</li>
             ))}
@@ -179,84 +289,17 @@ export const CertificationSteps: React.FC<CertificationStepsProps> = ({ data }) 
         </div>
       )}
 
-      {/* Section: Official BIS Sources & Expandable Evidence Cards */}
-      {data.sources && data.sources.length > 0 && (
-        <div className="border border-slate-800 bg-slate-950/80 rounded-xl overflow-hidden transition-all duration-200">
-          <button
-            type="button"
-            onClick={() => setSourcesOpen(!sourcesOpen)}
-            className="w-full flex items-center justify-between px-4 py-3 text-xs font-semibold text-slate-200 hover:bg-slate-900/60 transition-colors"
-          >
-            <div className="flex items-center space-x-2">
-              <BookOpen className="w-4 h-4 text-blue-400" />
-              <span>{data.sources.length} official BIS sources retrieved</span>
-            </div>
-            <div className="flex items-center space-x-1.5 text-slate-400 text-xs">
-              <span>{sourcesOpen ? "Collapse Sources" : "View Sources & Evidence"}</span>
-              {sourcesOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </div>
-          </button>
+      {/* Sources */}
+      <CitationPanel sources={data.sources} />
 
-          {sourcesOpen && (
-            <div className="p-4 border-t border-slate-800/80 space-y-3 bg-slate-950/95">
-              {data.sources.map((src, idx) => (
-                <div
-                  key={idx}
-                  className="p-3 rounded-lg border border-slate-800/70 bg-slate-900/40 text-xs text-slate-300 space-y-1.5"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="font-semibold text-slate-100 flex items-center gap-1.5">
-                      <span className="w-5 h-5 rounded-full bg-blue-900/40 border border-blue-500/30 text-blue-300 flex items-center justify-center text-[10px]">
-                        {idx + 1}
-                      </span>
-                      {src.document_title}
-                    </div>
-                    {src.is_demo && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                        <AlertCircle className="w-3 h-3 mr-1" />
-                        {src.demo_badge || "Demo / Sample / Not official"}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-400 text-[11px]">
-                    {src.section && (
-                      <span>
-                        <strong className="text-slate-300">Section:</strong> {src.section}
-                      </span>
-                    )}
-                    {src.page_number && (
-                      <span>
-                        <strong className="text-slate-300">Page:</strong> {src.page_number}
-                      </span>
-                    )}
-                  </div>
-
-                  {src.url && (
-                    <div className="pt-1">
-                      <a
-                        href={src.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 hover:underline"
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                        <span>{src.url}</span>
-                      </a>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Official Disclaimer */}
+      {/* Disclaimer */}
       {data.disclaimer && (
-        <div className="text-[11px] text-slate-400 italic border-l-2 border-slate-700 pl-3 py-1">
+        <p
+          className="text-[11px] italic border-l-2 pl-3 py-1"
+          style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
+        >
           {data.disclaimer}
-        </div>
+        </p>
       )}
     </div>
   );

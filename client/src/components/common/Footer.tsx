@@ -1,60 +1,127 @@
-﻿import React from "react";
+"use client";
+
+import React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Shield, ExternalLink, AlertTriangle } from "lucide-react";
 
 export const Footer: React.FC = () => {
+  const pathname = usePathname();
+  // Full-height chat page — no footer
+  if (pathname === "/assistant") return null;
+
   return (
-    <footer className="w-full border-t border-slate-800/80 bg-slate-950 text-slate-400 text-xs py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+    <footer
+      className="w-full border-t py-6 px-4 sm:px-6 lg:px-8"
+      style={{
+        backgroundColor: "var(--surface-overlay)",
+        borderColor: "var(--border)",
+        color: "var(--text-muted)",
+      }}
+    >
+      <div className="max-w-7xl mx-auto">
+        {/* Top row */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+          {/* Brand */}
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
-              <Shield className="w-4 h-4" />
+            <div
+              className="w-7 h-7 rounded-lg flex items-center justify-center"
+              style={{
+                backgroundColor: "var(--accent-subtle)",
+                border: "1px solid var(--accent-border)",
+              }}
+            >
+              <Shield className="w-3.5 h-3.5" style={{ color: "var(--accent)" }} />
             </div>
-            <div>
-              <span className="font-semibold text-slate-200">Dev Dynasty</span> • BIS Intelligence Platform
-              <span className="ml-2 text-[10px] text-slate-500 font-mono">SIH267107</span>
+            <div className="text-xs">
+              <span className="font-semibold" style={{ color: "var(--text-secondary)" }}>
+                Dev Dynasty
+              </span>
+              <span style={{ color: "var(--text-muted)" }}> · BIS Intelligence Platform · </span>
+              <span
+                className="font-mono text-[10px]"
+                style={{ color: "var(--text-placeholder)" }}
+              >
+                SIH267107
+              </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-6 text-[11px]">
+          {/* Links */}
+          <div
+            className="flex items-center gap-5 text-[11px]"
+            style={{ color: "var(--text-muted)" }}
+          >
             <a
               href="https://www.bis.gov.in"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-slate-200 flex items-center gap-1"
+              className="flex items-center gap-1 transition-colors hover:opacity-80"
+              style={{ color: "var(--text-muted)" }}
+              onMouseEnter={(e) =>
+                ((e.currentTarget as HTMLElement).style.color = "var(--text-primary)")
+              }
+              onMouseLeave={(e) =>
+                ((e.currentTarget as HTMLElement).style.color = "var(--text-muted)")
+              }
             >
-              <span>BIS Official Portal</span>
+              <span>BIS Portal</span>
               <ExternalLink className="w-3 h-3" />
             </a>
             <a
               href="https://www.manakonline.in"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-slate-200 flex items-center gap-1"
+              className="flex items-center gap-1 transition-colors"
+              style={{ color: "var(--text-muted)" }}
+              onMouseEnter={(e) =>
+                ((e.currentTarget as HTMLElement).style.color = "var(--text-primary)")
+              }
+              onMouseLeave={(e) =>
+                ((e.currentTarget as HTMLElement).style.color = "var(--text-muted)")
+              }
             >
               <span>Manakonline</span>
               <ExternalLink className="w-3 h-3" />
             </a>
-            <Link href="/about" className="hover:text-slate-200">
-              Scope & Boundaries
+            <Link
+              href="/about"
+              className="transition-colors"
+              style={{ color: "var(--text-muted)" }}
+            >
+              Scope &amp; Boundaries
             </Link>
           </div>
         </div>
 
-        {/* Regulatory & Disclaimer Notice */}
-        <div className="p-3.5 rounded-xl border border-slate-900 bg-slate-900/40 text-[11px] text-slate-500 space-y-1">
-          <div className="flex items-center gap-1.5 font-semibold text-slate-400">
-            <AlertTriangle className="w-3.5 h-3.5 text-amber-500/80" />
-            <span>Important Regulatory Disclaimer:</span>
-          </div>
-          <p className="leading-relaxed">
-            This platform is an independent AI prototype developed by team Dev Dynasty for Smart India Hackathon (SIH267107) to assist MSMEs, manufacturers, and consumers with Indian Standards discovery. It is not an official Bureau of Indian Standards authority. All sample datasets are designated as <em>Demo / Sample / Not official</em>. Official conformity certifications must be verified directly through authorized BIS offices and Gazette notifications.
+        {/* Disclaimer */}
+        <div
+          className="flex items-start gap-2.5 p-3 rounded-xl text-[11px] leading-relaxed"
+          style={{
+            backgroundColor: "var(--surface-raised)",
+            border: "1px solid var(--border)",
+            color: "var(--text-muted)",
+          }}
+        >
+          <AlertTriangle
+            className="w-3.5 h-3.5 flex-shrink-0 mt-0.5"
+            style={{ color: "var(--warning)" }}
+          />
+          <p>
+            <span className="font-semibold" style={{ color: "var(--text-secondary)" }}>
+              Disclaimer:{" "}
+            </span>
+            Independent AI prototype for SIH267107. Not an official BIS authority. Verify certifications
+            through authorized BIS offices and official Gazette notifications.
           </p>
         </div>
 
-        <div className="text-center text-[10px] text-slate-600">
-          © 2026 Dev Dynasty • Built with Next.js, FastAPI, Pydantic, Gemini & Supabase pgvector.
+        {/* Copyright */}
+        <div
+          className="mt-4 text-center text-[10px]"
+          style={{ color: "var(--text-placeholder)" }}
+        >
+          © 2026 Dev Dynasty · Built with Next.js, FastAPI, Gemini &amp; Supabase pgvector
         </div>
       </div>
     </footer>

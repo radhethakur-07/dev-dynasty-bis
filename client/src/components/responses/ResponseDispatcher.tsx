@@ -1,4 +1,6 @@
-﻿import React from "react";
+"use client";
+
+import React from "react";
 import { FinalResponseUnion } from "@/types/api";
 import { StandardCard } from "./StandardCard";
 import { CertificationSteps } from "./CertificationSteps";
@@ -30,66 +32,129 @@ export const ResponseDispatcher: React.FC<ResponseDispatcherProps> = ({ response
     case "scheme_information":
       return (
         <div className="space-y-4">
-          <div className="p-4 rounded-xl border border-blue-900/40 bg-blue-950/20">
-            <h3 className="text-base font-bold text-slate-100">{response.scheme_name}</h3>
-            <p className="mt-1 text-xs text-slate-300 leading-relaxed">{response.description}</p>
+          {/* Scheme header */}
+          <div
+            className="p-4 rounded-xl"
+            style={{
+              background: "linear-gradient(135deg, var(--accent-subtle) 0%, var(--surface-raised) 100%)",
+              border: "1px solid var(--accent-border)",
+            }}
+          >
+            <h3 className="text-base font-bold mb-2" style={{ color: "var(--text-primary)" }}>
+              {response.scheme_name}
+            </h3>
+            <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+              {response.description}
+            </p>
           </div>
-          <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/40 space-y-2">
-            <h4 className="text-xs font-semibold text-slate-200">Applicability</h4>
-            <p className="text-xs text-slate-300">{response.applicability}</p>
+
+          {/* Applicability */}
+          <div
+            className="p-4 rounded-xl space-y-2"
+            style={{
+              backgroundColor: "var(--surface-raised)",
+              border: "1px solid var(--border)",
+            }}
+          >
+            <h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+              Applicability
+            </h4>
+            <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+              {response.applicability}
+            </p>
           </div>
-          <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/40 space-y-2">
-            <h4 className="text-xs font-semibold text-slate-200">Key Features</h4>
-            <ul className="list-disc list-inside text-xs text-slate-300 space-y-1">
+
+          {/* Key features */}
+          <div
+            className="p-4 rounded-xl space-y-2"
+            style={{
+              backgroundColor: "var(--surface-raised)",
+              border: "1px solid var(--border)",
+            }}
+          >
+            <h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+              Key Features
+            </h4>
+            <ul className="space-y-1.5">
               {response.key_features.map((feat, idx) => (
-                <li key={idx}>{feat}</li>
+                <li key={idx} className="flex items-start gap-2 text-xs" style={{ color: "var(--text-secondary)" }}>
+                  <span
+                    className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5"
+                    style={{ backgroundColor: "var(--accent)" }}
+                  />
+                  {feat}
+                </li>
               ))}
             </ul>
           </div>
+
           <CitationPanel sources={response.sources} />
         </div>
       );
 
     case "insufficient_evidence":
       return (
-        <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-950/20 space-y-3">
-          <div className="flex items-center gap-2 text-amber-400 font-semibold text-xs">
+        <div
+          className="p-4 rounded-xl space-y-3"
+          style={{
+            backgroundColor: "rgba(217, 119, 6, 0.06)",
+            border: "1px solid rgba(217, 119, 6, 0.2)",
+          }}
+        >
+          <div className="flex items-center gap-2 font-semibold text-sm" style={{ color: "var(--warning)" }}>
             <AlertTriangle className="w-4 h-4 flex-shrink-0" />
             <span>Insufficient Grounded Evidence</span>
           </div>
-          <p className="text-xs text-slate-300 leading-relaxed">{response.message}</p>
-          <div className="pt-2 border-t border-amber-500/20 text-xs text-slate-300">
-            <strong className="text-amber-300">Recommended Action: </strong>
-            <span>{response.recommended_official_action}</span>
+          <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+            {response.message}
+          </p>
+          <div
+            className="pt-3 border-t text-xs"
+            style={{ borderColor: "rgba(217, 119, 6, 0.2)", color: "var(--text-secondary)" }}
+          >
+            <strong style={{ color: "var(--warning)" }}>Recommended action: </strong>
+            {response.recommended_official_action}
           </div>
-          <div className="pt-1">
-            <a
-              href="https://www.bis.gov.in"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 underline"
-            >
-              <span>Visit Official BIS Portal (bis.gov.in)</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          </div>
+          <a
+            href="https://www.bis.gov.in"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs transition-colors"
+            style={{ color: "var(--accent)" }}
+          >
+            <ExternalLink className="w-3 h-3" />
+            <span>Visit Official BIS Portal (bis.gov.in)</span>
+          </a>
         </div>
       );
 
     case "clarification_required":
       return (
-        <div className="p-4 rounded-xl border border-blue-500/30 bg-blue-950/20 space-y-3">
-          <div className="flex items-center gap-2 text-blue-400 font-semibold text-xs">
+        <div
+          className="p-4 rounded-xl space-y-3"
+          style={{
+            backgroundColor: "var(--accent-subtle)",
+            border: "1px solid var(--accent-border)",
+          }}
+        >
+          <div className="flex items-center gap-2 font-semibold text-sm" style={{ color: "var(--accent)" }}>
             <HelpCircle className="w-4 h-4 flex-shrink-0" />
-            <span>Clarification Required</span>
+            <span>Please clarify your question</span>
           </div>
-          <p className="text-xs text-slate-200">{response.question}</p>
+          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+            {response.question}
+          </p>
           {response.suggested_options && response.suggested_options.length > 0 && (
             <div className="flex flex-wrap gap-2 pt-1">
               {response.suggested_options.map((opt, idx) => (
                 <span
                   key={idx}
-                  className="px-2.5 py-1 rounded-md bg-slate-800 border border-slate-700 text-xs text-slate-300"
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                  style={{
+                    backgroundColor: "var(--surface-raised)",
+                    border: "1px solid var(--border)",
+                    color: "var(--text-secondary)",
+                  }}
                 >
                   {opt}
                 </span>
@@ -102,13 +167,13 @@ export const ResponseDispatcher: React.FC<ResponseDispatcherProps> = ({ response
     case "text":
       return (
         <div className="space-y-3">
-          <div className="text-sm leading-relaxed text-slate-200 whitespace-pre-wrap">
-            {response.content}
-          </div>
           {response.disclaimer && (
-            <div className="text-[11px] text-slate-400 italic border-l-2 border-slate-700 pl-3 py-0.5">
+            <p
+              className="text-[11px] italic border-l-2 pl-3 py-0.5"
+              style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
+            >
               {response.disclaimer}
-            </div>
+            </p>
           )}
           {response.sources && <CitationPanel sources={response.sources} />}
         </div>
@@ -116,9 +181,17 @@ export const ResponseDispatcher: React.FC<ResponseDispatcherProps> = ({ response
 
     case "error":
       return (
-        <div className="p-4 rounded-xl border border-red-500/30 bg-red-950/20 flex items-start gap-3">
-          <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-          <div className="text-xs text-red-300 leading-relaxed">{response.message}</div>
+        <div
+          className="p-4 rounded-xl flex items-start gap-3"
+          style={{
+            backgroundColor: "rgba(220, 38, 38, 0.06)",
+            border: "1px solid rgba(220, 38, 38, 0.2)",
+          }}
+        >
+          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "var(--error)" }} />
+          <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+            {response.message}
+          </p>
         </div>
       );
 

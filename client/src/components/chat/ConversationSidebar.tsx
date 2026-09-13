@@ -1,6 +1,18 @@
-import React, { useState, useEffect } from "react";
+"use client";
+
+import React, { useState } from "react";
 import { Conversation } from "@/lib/chatStorage";
-import { Plus, Trash2, MessageSquare, PanelLeftClose, PanelLeft, Pencil, Check, X } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  MessageSquare,
+  PanelLeftClose,
+  PanelLeft,
+  Pencil,
+  Check,
+  X,
+  History,
+} from "lucide-react";
 
 interface ConversationSidebarProps {
   conversations: Conversation[];
@@ -25,14 +37,6 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
 }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   const startRename = (id: string, currentTitle: string) => {
     setEditingId(id);
@@ -46,128 +50,260 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
     setEditingId(null);
   };
 
-  const handleSelect = (id: string) => {
-    onSelect(id);
-    if (isMobile) {
-      onToggle();
-    }
-  };
-
-  const handleNew = () => {
-    onNew();
-    if (isMobile) {
-      onToggle();
-    }
-  };
-
   return (
     <>
+      {/* Collapsed toggle button — desktop only */}
       {!isOpen && (
         <button
           onClick={onToggle}
-          className="fixed left-2 top-20 z-30 p-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors md:flex hidden"
-          style={{ display: isMobile ? 'flex' : undefined }}
+          className="hidden md:flex fixed left-3 top-20 z-30 w-8 h-8 items-center justify-center rounded-lg transition-all duration-150 shadow-sm"
+          style={{
+            backgroundColor: "var(--surface-raised)",
+            border: "1px solid var(--border)",
+            color: "var(--text-muted)",
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.color = "var(--text-primary)";
+            (e.currentTarget as HTMLElement).style.backgroundColor = "var(--surface-overlay)";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.color = "var(--text-muted)";
+            (e.currentTarget as HTMLElement).style.backgroundColor = "var(--surface-raised)";
+          }}
           aria-label="Open chat history"
+          title="Open chat history"
         >
-          <PanelLeft className="w-5 h-5" />
+          <PanelLeft className="w-4 h-4" />
         </button>
       )}
 
-      {isOpen && isMobile && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-30 md:hidden" 
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-30 md:hidden"
           onClick={onToggle}
+          aria-hidden="true"
         />
       )}
 
-      <div 
-        className={`w-64 h-full bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 flex flex-col flex-shrink-0 shadow-sm transition-transform duration-300 ${
-          isMobile ? 'fixed inset-y-0 left-0 z-40 ' + (isOpen ? 'translate-x-0' : '-translate-x-full') : (isOpen ? 'translate-x-0' : 'hidden')
-        }`}
+      {/* Sidebar panel */}
+      <aside
+        className={`flex flex-col flex-shrink-0 h-full transition-all duration-300 ${
+          isOpen ? "w-64" : "w-0 overflow-hidden"
+        } md:relative fixed inset-y-0 left-0 z-40 md:z-auto`}
+        style={{
+          backgroundColor: "var(--sidebar-bg)",
+          borderRight: isOpen ? `1px solid var(--sidebar-border)` : "none",
+        }}
+        aria-label="Conversation history"
+        role="complementary"
       >
-        {/* Header */}
-        <div className="p-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <span className="text-sm font-semibold text-slate-800 dark:text-slate-300">Chat History</span>
-          <button
-            onClick={onToggle}
-            className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-            aria-label="Close sidebar"
-          >
-            <PanelLeftClose className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* New Chat Button */}
-        <div className="p-3">
-          <button
-            onClick={handleNew}
-            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg bg-blue-600/10 dark:bg-blue-600/20 border border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-600/20 dark:hover:bg-blue-600/30 transition-colors text-sm font-medium"
-          >
-            <Plus className="w-4 h-4" />
-            New Chat
-          </button>
-        </div>
-
-        {/* Conversation List */}
-        <div className="flex-1 overflow-y-auto px-2 space-y-1">
-          {conversations.length === 0 && (
-            <p className="text-xs text-slate-400 dark:text-slate-600 text-center py-8 px-4">
-              No conversations yet. Start a new chat!
-            </p>
-          )}
-          {conversations.map((conv) => (
+        {isOpen && (
+          <>
+            {/* Sidebar header */}
             <div
-              key={conv.id}
-              className={`group flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-colors text-sm ${
-                conv.id === activeId
-                  ? "bg-blue-50/80 dark:bg-slate-800 text-blue-900 dark:text-white border border-blue-200 dark:border-slate-700 shadow-sm"
-                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-slate-200 border border-transparent"
-              }`}
-              onClick={() => handleSelect(conv.id)}
+              className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0"
+              style={{ borderColor: "var(--sidebar-border)" }}
             >
-              <MessageSquare className="w-3.5 h-3.5 flex-shrink-0 text-blue-500 dark:text-blue-400" />
-              {editingId === conv.id ? (
-                <div className="flex-1 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                  <input
-                    type="text"
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && confirmRename()}
-                    className="flex-1 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-xs px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-600 outline-none"
-                    autoFocus
+              <div className="flex items-center gap-2">
+                <History className="w-4 h-4" style={{ color: "var(--text-muted)" }} />
+                <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                  Conversations
+                </span>
+              </div>
+              <button
+                onClick={onToggle}
+                className="p-1.5 rounded-lg transition-colors"
+                style={{ color: "var(--text-muted)" }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = "var(--surface-overlay)";
+                  (e.currentTarget as HTMLElement).style.color = "var(--text-primary)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = "";
+                  (e.currentTarget as HTMLElement).style.color = "var(--text-muted)";
+                }}
+                aria-label="Close sidebar"
+              >
+                <PanelLeftClose className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* New Chat button */}
+            <div className="px-3 py-3 flex-shrink-0">
+              <button
+                onClick={onNew}
+                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
+                style={{
+                  backgroundColor: "var(--accent-subtle)",
+                  border: "1px solid var(--accent-border)",
+                  color: "var(--accent)",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = "var(--accent)";
+                  (e.currentTarget as HTMLElement).style.color = "#ffffff";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = "var(--accent-subtle)";
+                  (e.currentTarget as HTMLElement).style.color = "var(--accent)";
+                }}
+              >
+                <Plus className="w-4 h-4" />
+                <span>New Chat</span>
+              </button>
+            </div>
+
+            {/* Conversation list */}
+            <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5">
+              {conversations.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 px-4 gap-3">
+                  <MessageSquare
+                    className="w-8 h-8 opacity-30"
+                    style={{ color: "var(--text-muted)" }}
                   />
-                  <button onClick={confirmRename} className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-500">
-                    <Check className="w-3 h-3" />
-                  </button>
-                  <button onClick={() => setEditingId(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
-                    <X className="w-3 h-3" />
-                  </button>
+                  <p
+                    className="text-xs text-center leading-relaxed"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    No conversations yet.
+                    <br />
+                    Start a new chat above.
+                  </p>
                 </div>
               ) : (
-                <>
-                  <span className="flex-1 truncate text-xs font-medium">{conv.title}</span>
-                  <div className="hidden group-hover:flex items-center gap-0.5">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); startRename(conv.id, conv.title); }}
-                      className="p-1 rounded hover:bg-slate-700 text-slate-500 hover:text-slate-300"
-                      aria-label="Rename conversation"
+                conversations.map((conv) => {
+                  const isActive = conv.id === activeId;
+                  return (
+                    <div
+                      key={conv.id}
+                      className="group flex items-center gap-2 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-100 text-sm"
+                      style={
+                        isActive
+                          ? {
+                              backgroundColor: "var(--sidebar-active-bg)",
+                              border: "1px solid var(--sidebar-active-border)",
+                              color: "var(--sidebar-active-text)",
+                            }
+                          : {
+                              border: "1px solid transparent",
+                              color: "var(--text-secondary)",
+                            }
+                      }
+                      onClick={() => {
+                        if (editingId !== conv.id) onSelect(conv.id);
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isActive) {
+                          (e.currentTarget as HTMLElement).style.backgroundColor =
+                            "var(--sidebar-hover)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isActive) {
+                          (e.currentTarget as HTMLElement).style.backgroundColor = "";
+                        }
+                      }}
                     >
-                      <Pencil className="w-3 h-3" />
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onDelete(conv.id); }}
-                      className="p-1 rounded hover:bg-slate-700 text-slate-500 hover:text-red-400"
-                      aria-label="Delete conversation"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
-                </>
+                      <MessageSquare
+                        className="w-3.5 h-3.5 flex-shrink-0"
+                        style={{ color: isActive ? "var(--accent)" : "var(--text-placeholder)" }}
+                      />
+
+                      {editingId === conv.id ? (
+                        <div
+                          className="flex-1 flex items-center gap-1"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <input
+                            type="text"
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && confirmRename()}
+                            className="flex-1 text-xs px-1.5 py-0.5 rounded-md outline-none"
+                            style={{
+                              backgroundColor: "var(--surface-raised)",
+                              border: "1px solid var(--accent)",
+                              color: "var(--text-primary)",
+                            }}
+                            autoFocus
+                          />
+                          <button
+                            onClick={confirmRename}
+                            className="p-1 rounded flex-shrink-0 transition-colors"
+                            style={{ color: "var(--success)" }}
+                            aria-label="Confirm rename"
+                          >
+                            <Check className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => setEditingId(null)}
+                            className="p-1 rounded flex-shrink-0 transition-colors"
+                            style={{ color: "var(--text-muted)" }}
+                            aria-label="Cancel rename"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <span className="flex-1 truncate text-xs font-medium">
+                            {conv.title}
+                          </span>
+                          <div className="hidden group-hover:flex items-center gap-0.5 flex-shrink-0">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                startRename(conv.id, conv.title);
+                              }}
+                              className="p-1 rounded-md transition-colors"
+                              style={{ color: "var(--text-placeholder)" }}
+                              onMouseEnter={(e) => {
+                                (e.currentTarget as HTMLElement).style.backgroundColor =
+                                  "var(--surface-overlay)";
+                                (e.currentTarget as HTMLElement).style.color =
+                                  "var(--text-primary)";
+                              }}
+                              onMouseLeave={(e) => {
+                                (e.currentTarget as HTMLElement).style.backgroundColor = "";
+                                (e.currentTarget as HTMLElement).style.color =
+                                  "var(--text-placeholder)";
+                              }}
+                              aria-label="Rename conversation"
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete(conv.id);
+                              }}
+                              className="p-1 rounded-md transition-colors"
+                              style={{ color: "var(--text-placeholder)" }}
+                              onMouseEnter={(e) => {
+                                (e.currentTarget as HTMLElement).style.backgroundColor =
+                                  "rgba(220, 38, 38, 0.1)";
+                                (e.currentTarget as HTMLElement).style.color = "var(--error)";
+                              }}
+                              onMouseLeave={(e) => {
+                                (e.currentTarget as HTMLElement).style.backgroundColor = "";
+                                (e.currentTarget as HTMLElement).style.color =
+                                  "var(--text-placeholder)";
+                              }}
+                              aria-label="Delete conversation"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })
               )}
             </div>
-          ))}
-        </div>
-      </div>
+          </>
+        )}
+      </aside>
     </>
   );
 };
