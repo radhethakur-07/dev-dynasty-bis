@@ -6,14 +6,30 @@ from app.auth.middleware import get_optional_user
 from app.db.supabase import get_supabase_client
 from app.core.logging import logger
 
+import uuid as _uuid
+
 router = APIRouter()
 
 
+def _is_valid_uuid(value: str) -> bool:
+    try:
+        _uuid.UUID(value)
+        return True
+    except (ValueError, AttributeError):
+        return False
+
+
 def _persist_message(session_id: str, role: str, content: str, intent: str = None, tool_called: str = None):
-    """Persist a message to Supabase (best-effort, never blocks chat)."""
+    """Persist a message to Supabase (best-effort, never blocks chat).
+    Silently skips if session_id is not a valid UUID — this happens when
+    the frontend falls back to localStorage IDs (e.g. conv-{timestamp}-{random}).
+    """
+    if not session_id or not _is_valid_uuid(session_id):
+        logger.debug(f"[CHAT] Skipping message persistence — non-UUID session_id: {session_id!r}")
+        return
     try:
         supabase = get_supabase_client()
-        if supabase and session_id:
+        if supabase:
             supabase.table("messages").insert({
                 "session_id": session_id,
                 "role": role,

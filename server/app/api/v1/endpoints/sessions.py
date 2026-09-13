@@ -1,6 +1,7 @@
 """
 Chat sessions and messages API endpoints for Supabase persistence.
 """
+import uuid as _uuid
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional, List
@@ -9,6 +10,20 @@ from app.auth.middleware import get_current_user
 from app.core.logging import logger
 
 router = APIRouter()
+
+
+def _validate_uuid(session_id: str) -> None:
+    """Raise 400 immediately if session_id is not a valid UUID.
+    This prevents Supabase from receiving invalid input and returning
+    a confusing 400 Bad Request that surfaces as a 500 to the client.
+    """
+    try:
+        _uuid.UUID(session_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid session ID format: '{session_id}'. Sessions must use server-assigned UUIDs."
+        )
 
 
 class CreateSessionRequest(BaseModel):
@@ -73,6 +88,8 @@ async def get_session_messages(
     if not supabase:
         raise HTTPException(status_code=503, detail="Database not available")
 
+    _validate_uuid(session_id)
+
     try:
         # Verify session belongs to user
         session = supabase.table("chat_sessions") \
@@ -107,6 +124,8 @@ async def delete_session(
     if not supabase:
         raise HTTPException(status_code=503, detail="Database not available")
 
+    _validate_uuid(session_id)
+
     try:
         session = supabase.table("chat_sessions") \
             .select("id") \
@@ -136,6 +155,8 @@ async def rename_session(
     supabase = get_supabase_client()
     if not supabase:
         raise HTTPException(status_code=503, detail="Database not available")
+
+    _validate_uuid(session_id)
 
     try:
         session = supabase.table("chat_sessions") \

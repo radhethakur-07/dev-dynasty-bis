@@ -79,7 +79,11 @@ class AIOrchestrator:
         elif result_type == "HallmarkingResponse":
             tool_result.summary = synthesis
         elif result_type == "SchemeInformationResponse":
-            tool_result.summary = synthesis
+            # SchemeInformationResponse has 'description', not 'summary'
+            if hasattr(tool_result, 'summary'):
+                tool_result.summary = synthesis
+            elif hasattr(tool_result, 'description'):
+                tool_result.description = synthesis
         elif result_type == "CertificationGuidanceResponse":
             # Don't replace structured steps, only add summary
             if hasattr(tool_result, 'summary'):

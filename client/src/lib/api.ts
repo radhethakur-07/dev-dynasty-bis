@@ -80,6 +80,7 @@ export async function createSession() {
   const response = await fetch(`${API_BASE_URL}/api/v1/sessions`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+    body: JSON.stringify({ title: "New Chat" }),
   });
   if (!response.ok) throw new Error("Failed to create session");
   return response.json();
