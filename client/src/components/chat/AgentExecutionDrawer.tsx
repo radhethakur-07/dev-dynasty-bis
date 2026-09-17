@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { ProcessingStage, FinalResponseUnion } from "@/types/api";
-import { ChevronDown, ChevronUp, Cpu, Database, ShieldCheck, Sparkles } from "lucide-react";
+import { ChevronDown, ChevronUp, Cpu, Database, ShieldCheck, Sparkles, CheckCircle2, Loader2 } from "lucide-react";
 
 interface AgentExecutionDrawerProps {
   intent?: string;
@@ -106,9 +106,9 @@ export const AgentExecutionDrawer: React.FC<AgentExecutionDrawerProps> = ({
               <span
                 className="px-2 py-0.5 rounded-full text-[10px] font-mono font-medium"
                 style={{
-                  backgroundColor: "rgba(16, 185, 129, 0.1)",
-                  color: "var(--success)",
-                  border: "1px solid rgba(16, 185, 129, 0.2)",
+                  backgroundColor: "var(--gold-subtle)",
+                  color: "var(--gold)",
+                  border: "1px solid var(--gold-border)",
                 }}
               >
                 ⚡ {toolCalled}()
@@ -126,10 +126,10 @@ export const AgentExecutionDrawer: React.FC<AgentExecutionDrawerProps> = ({
           </div>
         </button>
 
-        {/* Expanded trace details */}
+        {/* Expanded trace details — connected vertical timeline */}
         {isOpen && (
           <div
-            className="px-3 pb-3 pt-2 border-t space-y-2 animate-fade-in"
+            className="px-3 pb-3 pt-2 border-t space-y-3 animate-fade-in"
             style={{ borderColor: "var(--border)" }}
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -138,13 +138,14 @@ export const AgentExecutionDrawer: React.FC<AgentExecutionDrawerProps> = ({
                 style={{
                   backgroundColor: "var(--surface-raised)",
                   border: "1px solid var(--border)",
+                  borderLeft: "3px solid var(--accent)",
                 }}
               >
                 <div
                   className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider"
                   style={{ color: "var(--text-muted)" }}
                 >
-                  <Database className="w-3 h-3" style={{ color: "var(--info)" }} />
+                  <Database className="w-3 h-3" style={{ color: "var(--accent)" }} />
                   Database Retrieval
                 </div>
                 <p style={{ color: "var(--text-secondary)" }}>
@@ -154,15 +155,8 @@ export const AgentExecutionDrawer: React.FC<AgentExecutionDrawerProps> = ({
                   </span>{" "}
                   (753 Standards &amp; 437 Labs)
                 </p>
-                <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-                  PostgreSQL{" "}
-                  <code
-                    className="font-mono"
-                    style={{ color: "var(--accent)" }}
-                  >
-                    wfts
-                  </code>{" "}
-                  + Cosine similarity index
+                <p className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>
+                  HNSW + cosine similarity + wfts
                 </p>
               </div>
 
@@ -171,13 +165,14 @@ export const AgentExecutionDrawer: React.FC<AgentExecutionDrawerProps> = ({
                 style={{
                   backgroundColor: "var(--surface-raised)",
                   border: "1px solid var(--border)",
+                  borderLeft: "3px solid var(--gold)",
                 }}
               >
                 <div
                   className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider"
                   style={{ color: "var(--text-muted)" }}
                 >
-                  <ShieldCheck className="w-3 h-3" style={{ color: "var(--success)" }} />
+                  <ShieldCheck className="w-3 h-3" style={{ color: "var(--gold)" }} />
                   Provenance Check
                 </div>
                 <p className="font-medium" style={{ color: "var(--success)" }}>
@@ -190,27 +185,43 @@ export const AgentExecutionDrawer: React.FC<AgentExecutionDrawerProps> = ({
             </div>
 
             {stages && stages.length > 0 && (
-              <div className="space-y-1.5 pt-1">
+              <div className="space-y-0 pt-1">
                 <p
-                  className="text-[10px] font-semibold uppercase tracking-wider"
+                  className="text-[10px] font-semibold uppercase tracking-wider mb-2"
                   style={{ color: "var(--text-muted)" }}
                 >
                   Pipeline Steps
                 </p>
-                {stages.map((stg, sIdx) => (
-                  <div key={sIdx} className="flex items-start gap-2 text-xs">
-                    <span
-                      className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5"
-                      style={{ backgroundColor: "var(--success)" }}
-                    />
-                    <div>
-                      <span className="font-semibold" style={{ color: "var(--text-primary)" }}>
-                        {stg.stage}:{" "}
+                {/* Connected vertical timeline */}
+                <div className="relative">
+                  {stages.map((stg, sIdx) => (
+                    <div key={sIdx} className="flex items-start gap-2.5 relative">
+                      {/* Vertical connector */}
+                      {sIdx < stages.length - 1 && (
+                        <div
+                          className="absolute left-[5px] top-4 bottom-0 w-px"
+                          style={{ backgroundColor: "var(--border)" }}
+                        />
+                      )}
+                      {/* Status dot */}
+                      <span
+                        className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1 flex items-center justify-center"
+                        style={{ backgroundColor: "var(--success)" }}
+                      >
+                        <CheckCircle2
+                          className="w-2 h-2"
+                          style={{ color: "white" }}
+                        />
                       </span>
-                      <span style={{ color: "var(--text-muted)" }}>{stg.detail}</span>
+                      <div className="pb-2.5 text-xs">
+                        <span className="font-semibold" style={{ color: "var(--text-primary)" }}>
+                          {stg.stage}:{" "}
+                        </span>
+                        <span style={{ color: "var(--text-muted)" }}>{stg.detail}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -225,16 +236,16 @@ export const AgentExecutionDrawer: React.FC<AgentExecutionDrawerProps> = ({
               key={pIdx}
               type="button"
               onClick={() => onQuickPrompt(prompt)}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] text-left transition-all group"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] text-left transition-all group active:scale-95"
               style={{
                 backgroundColor: "var(--surface-raised)",
                 border: "1px solid var(--border)",
                 color: "var(--text-muted)",
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.borderColor = "var(--accent-border)";
-                (e.currentTarget as HTMLElement).style.color = "var(--accent)";
-                (e.currentTarget as HTMLElement).style.backgroundColor = "var(--accent-subtle)";
+                (e.currentTarget as HTMLElement).style.borderColor = "var(--gold-border)";
+                (e.currentTarget as HTMLElement).style.color = "var(--gold)";
+                (e.currentTarget as HTMLElement).style.backgroundColor = "var(--gold-subtle)";
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
@@ -242,7 +253,7 @@ export const AgentExecutionDrawer: React.FC<AgentExecutionDrawerProps> = ({
                 (e.currentTarget as HTMLElement).style.backgroundColor = "var(--surface-raised)";
               }}
             >
-              <Sparkles className="w-3 h-3 flex-shrink-0" style={{ color: "var(--accent)" }} />
+              <Sparkles className="w-3 h-3 flex-shrink-0" style={{ color: "var(--gold)" }} />
               <span>{prompt}</span>
             </button>
           ))}

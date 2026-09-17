@@ -130,6 +130,10 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
                         backgroundColor: "var(--chat-ai-bg)",
                         border: "1px solid var(--chat-ai-border)",
                         color: "var(--chat-ai-text)",
+                        // Gold left border on citation-containing messages
+                        borderLeft: msg.structuredResponse
+                          ? "3px solid var(--chat-citation-border)"
+                          : "1px solid var(--chat-ai-border)",
                       }
                 }
               >

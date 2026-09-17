@@ -83,18 +83,20 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         borderColor: "var(--border)",
       }}
     >
-      {/* Input Composer */}
+      {/* Input Composer — pill-shaped elevated */}
       <div
-        className="flex items-end gap-2 rounded-2xl p-2 transition-all duration-150"
+        className="flex items-end gap-2 p-2 transition-all duration-200"
         style={{
-          backgroundColor: "var(--surface-base)",
+          backgroundColor: "var(--surface-raised)",
           border: "1.5px solid var(--border)",
+          borderRadius: "1.5rem",
+          boxShadow: "0 2px 12px -2px rgba(37,56,120,0.08)",
         }}
         onFocus={() => {
           const el = document.querySelector(".chat-input-container") as HTMLElement;
           if (el) {
             el.style.borderColor = "var(--accent)";
-            el.style.boxShadow = "0 0 0 3px var(--accent-subtle)";
+            el.style.boxShadow = "0 4px 20px -4px rgba(37,56,120,0.15), 0 0 0 2px var(--accent-subtle)";
           }
         }}
       >

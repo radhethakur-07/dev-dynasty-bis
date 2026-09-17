@@ -12,25 +12,39 @@ const config: Config = {
       fontFamily: {
         sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
         mono: ["JetBrains Mono", "Menlo", "Monaco", "Consolas", "monospace"],
+        display: ["Fraunces", "Georgia", "serif"],
       },
       colors: {
-        // BIS Brand Blue — professional, trustworthy
+        // BIS Sovereign Indigo — deep authoritative blue
         primary: {
-          50: "#eff6ff",
-          100: "#dbeafe",
-          200: "#bfdbfe",
-          300: "#93c5fd",
-          400: "#60a5fa",
-          500: "#3b82f6",
-          600: "#2563eb",
-          700: "#1d4ed8",
-          800: "#1e40af",
-          900: "#1e3a8a",
-          950: "#172554",
+          50:  "#eef1f9",
+          100: "#d6dcf1",
+          200: "#adb9e3",
+          300: "#8496d5",
+          400: "#5b73c7",
+          500: "#4F72C8",
+          600: "#253878",
+          700: "#1C2D65",
+          800: "#162351",
+          900: "#0F183D",
+          950: "#080e29",
         },
-        // Surface tokens — used consistently across light/dark
+        // Certification Gold — official, trustworthy
+        gold: {
+          50:  "#fdfaee",
+          100: "#faf2cc",
+          200: "#f5e38a",
+          300: "#eece47",
+          400: "#e5b820",
+          500: "#D4A017",
+          600: "#B8860B",
+          700: "#9A7009",
+          800: "#7c5a08",
+          900: "#63490a",
+          950: "#3b2a04",
+        },
+        // Surface tokens — dark mode
         surface: {
-          // Dark
           950: "#080c14",
           900: "#0a0f1e",
           850: "#0d1424",
@@ -44,6 +58,8 @@ const config: Config = {
           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
         "grid-pattern":
           "linear-gradient(to right, rgb(30 41 59 / 0.08) 1px, transparent 1px), linear-gradient(to bottom, rgb(30 41 59 / 0.08) 1px, transparent 1px)",
+        "grid-pattern-light":
+          "linear-gradient(to right, rgb(37 56 120 / 0.06) 1px, transparent 1px), linear-gradient(to bottom, rgb(37 56 120 / 0.06) 1px, transparent 1px)",
       },
       animation: {
         "fade-in": "fadeIn 0.2s ease-out",
@@ -53,6 +69,8 @@ const config: Config = {
         "pulse-ring": "pulseRing 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         "dots": "dots 1.2s steps(5, end) infinite",
         "shimmer": "shimmer 2s linear infinite",
+        "gold-pulse": "goldPulse 2s ease-in-out infinite",
+        "count-up": "countUp 0.6s ease-out forwards",
       },
       keyframes: {
         fadeIn: {
@@ -85,13 +103,24 @@ const config: Config = {
           "0%": { backgroundPosition: "-1000px 0" },
           "100%": { backgroundPosition: "1000px 0" },
         },
+        goldPulse: {
+          "0%, 100%": { boxShadow: "0 0 0 0 rgba(184, 134, 11, 0.3)" },
+          "50%": { boxShadow: "0 0 0 6px rgba(184, 134, 11, 0)" },
+        },
+        countUp: {
+          "0%": { opacity: "0", transform: "translateY(4px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
       },
       boxShadow: {
-        "glow-blue": "0 0 20px -5px rgb(37 99 235 / 0.3)",
-        "glow-sm": "0 0 10px -3px rgb(37 99 235 / 0.2)",
-        "card": "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
-        "card-hover": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+        "glow-indigo": "0 0 20px -5px rgba(37, 56, 120, 0.35)",
+        "glow-gold": "0 0 20px -5px rgba(184, 134, 11, 0.35)",
+        "glow-sm": "0 0 10px -3px rgba(37, 56, 120, 0.2)",
+        "card": "0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.06)",
+        "card-hover": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.08)",
         "card-dark": "0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.3)",
+        "composer": "0 2px 12px -2px rgba(37, 56, 120, 0.12), 0 0 0 1px rgba(37, 56, 120, 0.08)",
+        "composer-focus": "0 4px 20px -4px rgba(37, 56, 120, 0.2), 0 0 0 2px rgba(184, 134, 11, 0.25)",
       },
       spacing: {
         "18": "4.5rem",

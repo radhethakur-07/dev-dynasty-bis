@@ -86,27 +86,33 @@ export const StandardCard: React.FC<StandardCardProps> = ({ data }) => {
               >
                 {/* Header row */}
                 <div className="flex items-start gap-3 flex-wrap">
-                  {/* IS Code badge */}
+                  {/* IS Code badge — monospace, gold */}
                   <span
                     className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-mono text-xs font-bold flex-shrink-0"
                     style={{
-                      backgroundColor: "var(--accent-subtle)",
-                      color: "var(--accent)",
-                      border: "1px solid var(--accent-border)",
+                      backgroundColor: "var(--gold-subtle)",
+                      color: "var(--gold)",
+                      border: "1px solid var(--gold-border)",
                     }}
                   >
                     <Bookmark className="w-3.5 h-3.5" />
                     {std.code}
                   </span>
 
-                  {/* Label */}
+                  {/* Label — mandatory vs voluntary status pill */}
                   {std.label && (
                     <span
                       className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold"
                       style={{
-                        backgroundColor: "var(--accent-subtle)",
-                        color: "var(--accent)",
-                        border: "1px solid var(--accent-border)",
+                        backgroundColor: std.label.toLowerCase().includes("mandatory") || std.label.toLowerCase().includes("qco")
+                          ? "var(--gold-subtle)"
+                          : "var(--accent-subtle)",
+                        color: std.label.toLowerCase().includes("mandatory") || std.label.toLowerCase().includes("qco")
+                          ? "var(--gold)"
+                          : "var(--accent)",
+                        border: `1px solid ${std.label.toLowerCase().includes("mandatory") || std.label.toLowerCase().includes("qco")
+                          ? "var(--gold-border)"
+                          : "var(--accent-border)"}`,
                       }}
                     >
                       <CheckCircle2 className="w-3 h-3" />

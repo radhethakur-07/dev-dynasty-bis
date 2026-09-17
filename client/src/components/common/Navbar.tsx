@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Shield,
   Sparkles,
   BookOpen,
   Award,
@@ -25,6 +24,50 @@ const navLinks = [
   { name: "Laboratories", href: "/laboratories", icon: FlaskConical },
   { name: "About", href: "/about", icon: Info },
 ];
+
+/* Two-tone Seal Emblem — indigo shield with gold inner mark */
+const SealEmblem: React.FC<{ size?: number }> = ({ size = 36 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 36 36"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    {/* Indigo shield body */}
+    <path
+      d="M18 3L4 8.5V18c0 7.5 5.8 14.2 14 16 8.2-1.8 14-8.5 14-16V8.5L18 3Z"
+      fill="#253878"
+    />
+    {/* Subtle inner border */}
+    <path
+      d="M18 6.2L6.4 10.8V18c0 6.2 4.8 11.7 11.6 13.3C24.8 29.7 29.6 24.2 29.6 18V10.8L18 6.2Z"
+      fill="none"
+      stroke="rgba(255,255,255,0.15)"
+      strokeWidth="0.8"
+    />
+    {/* Gold IS monogram */}
+    <text
+      x="18"
+      y="22"
+      textAnchor="middle"
+      fontSize="10"
+      fontWeight="700"
+      fontFamily="Georgia, serif"
+      fill="#B8860B"
+      letterSpacing="0.5"
+    >
+      IS
+    </text>
+    {/* Gold bottom star row */}
+    <g fill="#B8860B" opacity="0.7">
+      <circle cx="14" cy="26" r="1.1" />
+      <circle cx="18" cy="26" r="1.1" />
+      <circle cx="22" cy="26" r="1.1" />
+    </g>
+  </svg>
+);
 
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
@@ -60,30 +103,26 @@ export const Navbar: React.FC = () => {
 
   return (
     <header
-      className={`sticky top-0 z-50 w-full transition-all duration-200 ${
-        scrolled
-          ? "border-b shadow-sm"
-          : "border-b"
-      }`}
+      className={`sticky top-0 z-50 w-full transition-all duration-200 border-b`}
       style={{
         backgroundColor: "var(--surface-raised)",
         borderColor: "var(--border)",
-        boxShadow: scrolled ? "0 1px 3px 0 rgb(0 0 0 / 0.08)" : undefined,
+        boxShadow: scrolled ? "0 1px 8px 0 rgba(37,56,120,0.08)" : undefined,
       }}
     >
       <div
         className="absolute inset-0 backdrop-blur-md"
-        style={{ backgroundColor: "var(--surface-raised)", opacity: 0.92 }}
+        style={{ backgroundColor: "var(--surface-raised)", opacity: 0.93 }}
       />
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        {/* Brand */}
+        {/* Brand — Two-tone seal emblem */}
         <Link
           href="/"
           className="flex items-center gap-3 group flex-shrink-0"
           aria-label="BIS Intelligence Assistant — Home"
         >
-          <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-600/20 group-hover:scale-105 transition-transform duration-200">
-            <Shield className="w-4.5 h-4.5" style={{ width: "18px", height: "18px" }} />
+          <div className="group-hover:scale-105 transition-transform duration-200">
+            <SealEmblem size={36} />
           </div>
           <div className="hidden sm:block">
             <div className="flex items-center gap-2">
@@ -94,18 +133,18 @@ export const Navbar: React.FC = () => {
                 BIS Intelligence
               </span>
               <span
-                className="px-1.5 py-0.5 rounded text-[10px] font-bold border"
+                className="px-1.5 py-0.5 rounded text-[10px] font-bold border font-mono"
                 style={{
-                  backgroundColor: "var(--accent-subtle)",
-                  color: "var(--accent)",
-                  borderColor: "var(--accent-border)",
+                  backgroundColor: "var(--gold-subtle)",
+                  color: "var(--gold)",
+                  borderColor: "var(--gold-border)",
                 }}
               >
                 SIH
               </span>
             </div>
             <div className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>
-              Dev Dynasty • AI Assistant
+              Dev Dynasty · AI Assistant
             </div>
           </div>
         </Link>
@@ -121,9 +160,7 @@ export const Navbar: React.FC = () => {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150 ${
-                  isActive ? "" : "hover:opacity-90"
-                }`}
+                className={`relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150`}
                 style={
                   isActive
                     ? {
@@ -150,10 +187,11 @@ export const Navbar: React.FC = () => {
               >
                 <Icon className="w-3.5 h-3.5 flex-shrink-0" />
                 <span>{item.name}</span>
+                {/* Gold active underline */}
                 {isActive && (
                   <span
                     className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full"
-                    style={{ backgroundColor: "var(--accent)" }}
+                    style={{ backgroundColor: "var(--gold)" }}
                   />
                 )}
               </Link>
@@ -236,6 +274,8 @@ export const Navbar: React.FC = () => {
                       ? {
                           backgroundColor: "var(--accent-subtle)",
                           color: "var(--accent)",
+                          borderLeft: "3px solid var(--gold)",
+                          paddingLeft: "10px",
                         }
                       : {
                           color: "var(--text-secondary)",
@@ -247,7 +287,7 @@ export const Navbar: React.FC = () => {
                   {isActive && (
                     <span
                       className="ml-auto w-1.5 h-1.5 rounded-full"
-                      style={{ backgroundColor: "var(--accent)" }}
+                      style={{ backgroundColor: "var(--gold)" }}
                     />
                   )}
                 </Link>

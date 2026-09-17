@@ -17,8 +17,8 @@ export const CitationPanel: React.FC<CitationPanelProps> = ({ sources }) => {
     <div
       className="mt-4 rounded-xl overflow-hidden transition-all duration-200"
       style={{
-        backgroundColor: "var(--surface-overlay)",
         border: "1px solid var(--border)",
+        backgroundColor: "var(--surface-overlay)",
       }}
     >
       <button
@@ -27,7 +27,7 @@ export const CitationPanel: React.FC<CitationPanelProps> = ({ sources }) => {
         className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-medium transition-colors"
         style={{ color: "var(--text-muted)" }}
         onMouseEnter={(e) => {
-          (e.currentTarget as HTMLElement).style.backgroundColor = "var(--border)";
+          (e.currentTarget as HTMLElement).style.backgroundColor = "var(--border-subtle)";
         }}
         onMouseLeave={(e) => {
           (e.currentTarget as HTMLElement).style.backgroundColor = "";
@@ -36,7 +36,7 @@ export const CitationPanel: React.FC<CitationPanelProps> = ({ sources }) => {
         aria-label={`${isOpen ? "Hide" : "Show"} ${sources.length} source citations`}
       >
         <div className="flex items-center gap-2">
-          <BookOpen className="w-3.5 h-3.5" style={{ color: "var(--accent)" }} />
+          <BookOpen className="w-3.5 h-3.5" style={{ color: "var(--gold)" }} />
           <span style={{ color: "var(--text-secondary)" }}>
             {sources.length} verified source{sources.length !== 1 ? "s" : ""}
           </span>
@@ -53,22 +53,25 @@ export const CitationPanel: React.FC<CitationPanelProps> = ({ sources }) => {
           style={{ borderColor: "var(--border)" }}
         >
           {sources.map((src, idx) => (
+            /* Gazette stamp chip — gold left border */
             <div
               key={idx}
               className="p-3 rounded-lg space-y-1.5"
               style={{
                 backgroundColor: "var(--surface-raised)",
                 border: "1px solid var(--border)",
+                borderLeft: "3px solid var(--gold)",
               }}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2 text-xs font-semibold" style={{ color: "var(--text-primary)" }}>
+                  {/* Monospace notification number */}
                   <span
-                    className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] flex-shrink-0"
+                    className="w-6 h-6 rounded flex items-center justify-center text-[10px] flex-shrink-0 font-mono font-bold"
                     style={{
-                      backgroundColor: "var(--accent-subtle)",
-                      color: "var(--accent)",
-                      border: "1px solid var(--accent-border)",
+                      backgroundColor: "var(--gold-subtle)",
+                      color: "var(--gold)",
+                      border: "1px solid var(--gold-border)",
                     }}
                   >
                     {idx + 1}
@@ -109,10 +112,16 @@ export const CitationPanel: React.FC<CitationPanelProps> = ({ sources }) => {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 transition-colors"
-                    style={{ color: "var(--accent)" }}
+                    style={{ color: "var(--gold)" }}
+                    onMouseEnter={(e) =>
+                      ((e.currentTarget as HTMLElement).style.color = "var(--gold-hover)")
+                    }
+                    onMouseLeave={(e) =>
+                      ((e.currentTarget as HTMLElement).style.color = "var(--gold)")
+                    }
                   >
                     <ExternalLink className="w-3 h-3" />
-                    <span>Official reference</span>
+                    <span>Official Gazette reference</span>
                   </a>
                 )}
               </div>

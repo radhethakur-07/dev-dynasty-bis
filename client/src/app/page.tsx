@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
@@ -14,17 +14,59 @@ import {
   BookOpen,
   ArrowRight,
   Database,
-  Layers,
   Cpu,
   CheckCircle2,
   Building2,
   Rocket,
   Users,
   GraduationCap,
-  ExternalLink,
   ChevronRight
 } from "lucide-react";
 import { VoiceInputButton } from "@/components/common/VoiceInputButton";
+
+/* ——— Small seal SVG used in hero badge ——— */
+const SealBadge: React.FC = () => (
+  <svg width="14" height="14" viewBox="0 0 36 36" fill="none" aria-hidden="true">
+    <path d="M18 3L4 8.5V18c0 7.5 5.8 14.2 14 16 8.2-1.8 14-8.5 14-16V8.5L18 3Z" fill="#253878" />
+    <text x="18" y="22" textAnchor="middle" fontSize="10" fontWeight="700" fontFamily="Georgia,serif" fill="#B8860B" letterSpacing="0.5">IS</text>
+  </svg>
+);
+
+/* ——— Animated count-up stat ——— */
+const CountUp: React.FC<{ target: string; duration?: number }> = ({ target, duration = 1200 }) => {
+  const [displayed, setDisplayed] = useState("0");
+  const hasRun = useRef(false);
+  const ref = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !hasRun.current) {
+        hasRun.current = true;
+        // Parse numeric prefix
+        const numeric = parseFloat(target.replace(/[^0-9.]/g, ""));
+        const suffix = target.replace(/[0-9.]/g, "");
+        if (isNaN(numeric)) { setDisplayed(target); return; }
+        const steps = 40;
+        const stepTime = duration / steps;
+        let step = 0;
+        const timer = setInterval(() => {
+          step++;
+          const progress = step / steps;
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const val = Math.round(eased * numeric);
+          setDisplayed(`${val}${suffix}`);
+          if (step >= steps) clearInterval(timer);
+        }, stepTime);
+      }
+    }, { threshold: 0.3 });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [target, duration]);
+
+  return <span ref={ref}>{displayed}</span>;
+};
 
 export default function LandingPage() {
   const { token, isLoading } = useAuth();
@@ -69,7 +111,7 @@ export default function LandingPage() {
       title: "MSMEs & Manufacturers",
       icon: Building2,
       badge: "Industry",
-      color: "from-blue-600/20 to-indigo-600/20 border-blue-500/30",
+      accentColor: "#253878",
       description: "Discover whether your product falls under mandatory Quality Control Orders (QCOs), determine Scheme I (ISI Mark) requirements, and understand in-house testing (SIT).",
       action: "Find Applicable Standard",
       href: "/finder"
@@ -79,7 +121,7 @@ export default function LandingPage() {
       title: "Startups & Importers",
       icon: Rocket,
       badge: "Fast-Track",
-      color: "from-purple-600/20 to-pink-600/20 border-purple-500/30",
+      accentColor: "#B8860B",
       description: "Fast-track electronics and IT products under Scheme II (CRS) with 90-day lab test reports without factory audits, or navigate FMCS for foreign manufacturing.",
       action: "Explore CRS & FMCS",
       href: "/certification"
@@ -89,7 +131,7 @@ export default function LandingPage() {
       title: "Consumers & Buyers",
       icon: Users,
       badge: "Public Protection",
-      color: "from-amber-600/20 to-orange-600/20 border-amber-500/30",
+      accentColor: "#B8860B",
       description: "Verify 6-digit laser HUID on gold/silver jewellery, check hallmarking authenticity, understand 2x compensation rights under BIS Act 2016, and use BIS CARE.",
       action: "Verify Hallmarking & HUID",
       href: "/hallmarking"
@@ -99,7 +141,7 @@ export default function LandingPage() {
       title: "Students & Researchers",
       icon: GraduationCap,
       badge: "Academics",
-      color: "from-emerald-600/20 to-teal-600/20 border-emerald-500/30",
+      accentColor: "#253878",
       description: "Explore technical standards across 20+ sectors, find recognized testing facilities for material testing, and learn about Standards Clubs.",
       action: "Browse Laboratories",
       href: "/laboratories"
@@ -118,7 +160,7 @@ export default function LandingPage() {
   const metrics = [
     { label: "Verified Indian Standards", value: "753+", sub: "Live Ingested from bis.gov.in" },
     { label: "Recognized Testing Labs", value: "437+", sub: "Official BIS LIMS directory" },
-    { label: "Conformity Schemes", value: "6 Schemes", sub: "Scheme I, II, IV, X, FMCS, VI" },
+    { label: "Conformity Schemes", value: "6+", sub: "Scheme I, II, IV, X, FMCS, VI" },
     { label: "Grounded Integrity", value: "100%", sub: "Zero synthetic / hallucinated data" }
   ];
 
@@ -128,67 +170,144 @@ export default function LandingPage() {
       description: "Search 753+ compulsory and active Indian Standards (IS) with full QCO gazette notification links and automated attribute matching.",
       href: "/finder",
       icon: Search,
-      badge: "753+ Standards"
+      badge: "753+ Standards",
+      isLarge: true,
     },
     {
       title: "Certification Navigator",
-      description: "Step-by-step pathways for Scheme I (ISI), Scheme II (CRS), Scheme IV (CoC), Scheme X (Machinery), and FMCS with side-by-side scheme comparison.",
+      description: "Step-by-step pathways for Scheme I (ISI), Scheme II (CRS), Scheme IV (CoC), Scheme X (Machinery), and FMCS.",
       href: "/certification",
       icon: Award,
-      badge: "5 Schemes"
+      badge: "5 Schemes",
+      isLarge: false,
     },
     {
       title: "Hallmarking & HUID Hub",
-      description: "Interactive 6-digit HUID verification simulator, Gold & Silver purity calculator (IS 1417 & IS 2112:2025), and consumer statutory protection rights.",
+      description: "Interactive 6-digit HUID verification simulator, Gold & Silver purity calculator, and consumer statutory protection.",
       href: "/hallmarking",
       icon: CheckCircle,
-      badge: "HUID Simulator"
+      badge: "HUID Simulator",
+      isLarge: false,
     },
     {
       title: "Testing Laboratories Directory",
-      description: "Filter 437 officially recognized testing facilities by State (all 28 states), city, and discipline with direct links to official LIMS scopes.",
+      description: "Filter 437 officially recognized testing facilities by State, city, and discipline with direct LIMS links.",
       href: "/laboratories",
       icon: FlaskConical,
-      badge: "437 LIMS Labs"
+      badge: "437 LIMS Labs",
+      isLarge: false,
     }
+  ];
+
+  const whySteps = [
+    {
+      num: "1",
+      title: "Typed Intent Routing",
+      desc: "Queries are categorized into typed domain intents with strict tool allowlists; out-of-scope queries blocked before DB execution.",
+      icon: Cpu,
+    },
+    {
+      num: "2",
+      title: "Supabase pgvector RAG",
+      desc: "768-dimensional Gemini embeddings stored in PostgreSQL with HNSW indexing and PostgreSQL Websearch Full-Text Search (WFTS).",
+      icon: Database,
+    },
+    {
+      num: "3",
+      title: "Verified Official Provenance",
+      desc: "Every response preserves exact Government Gazette notification numbers, dates, and official LIMS laboratory scope endpoints.",
+      icon: Shield,
+    },
+    {
+      num: "4",
+      title: "Multilingual & Hinglish",
+      desc: "Full support for English, pure Hindi (हिन्दी), and natural conversational Hinglish as used by Indian MSMEs and consumers.",
+      icon: CheckCircle2,
+    },
   ];
 
   return (
     <div className="flex flex-col items-center justify-center w-full">
-      {/* Hero Section */}
-      <section className="relative w-full overflow-hidden pt-16 pb-12 md:pt-24 md:pb-20 border-b border-slate-200 dark:border-slate-900 bg-gradient-to-b from-slate-50 via-blue-50/20 to-white dark:from-slate-950 dark:via-[#060911] dark:to-[#080c14]">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b15_1px,transparent_1px),linear-gradient(to_bottom,#1e293b15_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+
+      {/* ——— HERO SECTION ——— */}
+      <section
+        className="relative w-full overflow-hidden pt-16 pb-12 md:pt-24 md:pb-20 border-b bg-paper"
+        style={{
+          borderColor: "var(--border)",
+          background: "linear-gradient(160deg, var(--surface-base) 0%, var(--surface-overlay) 100%)",
+        }}
+      >
+        {/* Subtle indigo grid */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: "linear-gradient(to right, rgba(37,56,120,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(37,56,120,0.05) 1px, transparent 1px)",
+            backgroundSize: "4rem 4rem",
+            maskImage: "radial-gradient(ellipse 60% 50% at 50% 0%, #000 70%, transparent 100%)",
+          }}
+        />
 
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
           {/* SIH Problem Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-semibold">
-            <Shield className="w-3.5 h-3.5" />
-            <span>Smart India Hackathon (SIH267107) • AI-Powered BIS Intelligence Assistant</span>
+          <div
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-semibold"
+            style={{
+              backgroundColor: "var(--accent-subtle)",
+              borderColor: "var(--accent-border)",
+              color: "var(--accent)",
+            }}
+          >
+            <SealBadge />
+            <span>Smart India Hackathon (SIH267107) · AI-Powered BIS Intelligence Assistant</span>
           </div>
 
-          {/* Main Title */}
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+          {/* Main Title — Fraunces display font */}
+          <h1
+            className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight"
+            style={{ color: "var(--text-primary)" }}
+          >
             Intelligent AI Assistant for{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 dark:from-blue-400 dark:via-indigo-300 dark:to-blue-500">
-              Indian Standards & BIS Services
+            <span style={{ color: "var(--accent)" }}>
+              Indian Standards &amp; BIS Services
             </span>
           </h1>
 
-          <p className="max-w-3xl mx-auto text-base sm:text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
+          <p
+            className="max-w-3xl mx-auto text-base sm:text-lg leading-relaxed"
+            style={{ color: "var(--text-secondary)" }}
+          >
             Eliminating the struggle of navigating fragmented PDFs and portals. Get instant, source-backed answers on applicable Indian Standards, mandatory QCOs, licensing pathways, HUID hallmarking, and testing laboratories.
           </p>
 
-          {/* Interactive Live Hero Search Bar */}
+          {/* Hero Search Bar */}
           <div className="max-w-2xl mx-auto pt-2">
             <form onSubmit={handleHeroSubmit} className="relative flex items-center">
               <div className="relative w-full flex items-center">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                <Search
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none"
+                  style={{ color: "var(--text-placeholder)" }}
+                />
                 <input
                   type="text"
                   value={heroSearch}
                   onChange={(e) => setHeroSearch(e.target.value)}
                   placeholder="Ask any query e.g. 'Standard for packaged drinking water' or 'IS 2347'..."
-                  className="w-full pl-12 pr-44 py-3.5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700/80 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-xl"
+                  className="w-full pl-12 pr-44 py-3.5 text-sm focus:outline-none shadow-xl"
+                  style={{
+                    borderRadius: "1rem",
+                    backgroundColor: "var(--surface-raised)",
+                    border: "1.5px solid var(--border)",
+                    color: "var(--text-primary)",
+                    transition: "border-color 0.15s, box-shadow 0.15s",
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "var(--accent)";
+                    e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-subtle)";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "var(--border)";
+                    e.currentTarget.style.boxShadow = "0 20px 25px -5px rgba(0,0,0,0.05)";
+                  }}
                 />
                 <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
                   <VoiceInputButton
@@ -201,7 +320,18 @@ export default function LandingPage() {
                   />
                   <button
                     type="submit"
-                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors flex items-center gap-1.5 shadow-md shadow-blue-600/30"
+                    className="px-4 py-2 text-white text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95"
+                    style={{
+                      borderRadius: "0.75rem",
+                      backgroundColor: "var(--accent)",
+                      boxShadow: "0 4px 14px -2px rgba(37,56,120,0.4)",
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.backgroundColor = "var(--accent-hover)";
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.backgroundColor = "var(--accent)";
+                    }}
                   >
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>Ask AI</span>
@@ -212,13 +342,27 @@ export default function LandingPage() {
 
             {/* Quick Suggestion Chips */}
             <div className="flex flex-wrap items-center justify-center gap-1.5 pt-3">
-              <span className="text-[11px] text-slate-500 font-medium mr-1">Try asking:</span>
+              <span className="text-[11px] font-medium mr-1" style={{ color: "var(--text-muted)" }}>Try asking:</span>
               {suggestedQueries.map((q, idx) => (
                 <button
                   key={idx}
                   type="button"
                   onClick={() => router.push(`/assistant?q=${encodeURIComponent(q)}`)}
-                  className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900/80 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 hover:border-blue-500/40 text-[11px] text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-300 transition-all shadow-sm"
+                  className="px-2.5 py-1 text-[11px] transition-all shadow-sm active:scale-95"
+                  style={{
+                    borderRadius: "0.5rem",
+                    backgroundColor: "var(--surface-raised)",
+                    border: "1px solid var(--border)",
+                    color: "var(--text-secondary)",
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = "var(--gold-border)";
+                    (e.currentTarget as HTMLElement).style.color = "var(--gold)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
+                    (e.currentTarget as HTMLElement).style.color = "var(--text-secondary)";
+                  }}
                 >
                   {q}
                 </button>
@@ -230,7 +374,12 @@ export default function LandingPage() {
           <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
             <Link
               href="/assistant"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold shadow-lg shadow-blue-600/25 transition-all hover:scale-[1.02]"
+              className="inline-flex items-center gap-2 px-6 py-3 text-white text-sm font-semibold transition-all hover:scale-[1.02] active:scale-95"
+              style={{
+                borderRadius: "0.875rem",
+                backgroundColor: "var(--accent)",
+                boxShadow: "0 6px 20px -4px rgba(37,56,120,0.45)",
+              }}
             >
               <Sparkles className="w-4 h-4" />
               <span>Launch Conversational Assistant</span>
@@ -239,40 +388,78 @@ export default function LandingPage() {
 
             <Link
               href="/finder"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-800 text-sm font-semibold transition-colors shadow-sm"
+              className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold transition-colors shadow-sm"
+              style={{
+                borderRadius: "0.875rem",
+                backgroundColor: "var(--surface-raised)",
+                border: "1px solid var(--border)",
+                color: "var(--text-secondary)",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = "var(--accent-border)";
+                (e.currentTarget as HTMLElement).style.color = "var(--accent)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
+                (e.currentTarget as HTMLElement).style.color = "var(--text-secondary)";
+              }}
             >
-              <BookOpen className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <BookOpen className="w-4 h-4" />
               <span>Product-to-Standard Engine</span>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Live Knowledge Base Metrics Bar */}
-      <section className="w-full border-b border-slate-200 dark:border-slate-900 bg-slate-50/80 dark:bg-slate-950/40 py-6">
+      {/* ——— ANIMATED METRICS STRIP ——— */}
+      <section
+        className="w-full border-b py-8"
+        style={{
+          borderColor: "var(--border)",
+          backgroundColor: "var(--surface-overlay)",
+        }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-px" style={{ backgroundColor: "var(--border)" }}>
             {metrics.map((m, idx) => (
-              <div key={idx} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900/40 text-center space-y-1 shadow-sm">
-                <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100">{m.value}</div>
-                <div className="text-xs font-semibold text-blue-600 dark:text-blue-400">{m.label}</div>
-                <div className="text-[10px] text-slate-500">{m.sub}</div>
+              <div
+                key={idx}
+                className="p-6 text-center space-y-1"
+                style={{ backgroundColor: "var(--surface-overlay)" }}
+              >
+                <div
+                  className="text-3xl sm:text-4xl font-extrabold font-display"
+                  style={{ color: "var(--accent)" }}
+                >
+                  <CountUp target={m.value} />
+                </div>
+                <div className="text-xs font-semibold" style={{ color: "var(--gold)" }}>{m.label}</div>
+                <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>{m.sub}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Personas Section — Tailored for MSMEs, Startups, Consumers & Students */}
+      {/* ——— PERSONAS — accent-bar card grid ——— */}
       <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center space-y-2 mb-10">
-          <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+          <span
+            className="text-xs font-bold uppercase tracking-wider"
+            style={{ color: "var(--gold)" }}
+          >
             Tailored For Every Stakeholder
           </span>
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">
+          <h2
+            className="text-2xl sm:text-3xl font-bold font-display"
+            style={{ color: "var(--text-primary)" }}
+          >
             Who Benefits from BIS Intelligence?
           </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
+          <p
+            className="text-sm max-w-xl mx-auto"
+            style={{ color: "var(--text-secondary)" }}
+          >
             Directly addressing the user struggles highlighted in the Smart India Hackathon problem statement.
           </p>
         </div>
@@ -280,27 +467,63 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {personas.map((persona) => {
             const Icon = persona.icon;
+            const isGold = persona.accentColor === "#B8860B";
             return (
               <div
                 key={persona.id}
-                className={`p-6 rounded-2xl border bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-800/80 shadow-sm hover:shadow-md flex flex-col justify-between space-y-4 ${persona.color} hover:bg-slate-50 dark:hover:bg-slate-900/60 transition-all`}
+                className="flex flex-col justify-between rounded-2xl overflow-hidden shadow-sm hover:shadow-card-hover transition-all"
+                style={{
+                  backgroundColor: "var(--surface-raised)",
+                  border: "1px solid var(--border)",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = isGold ? "var(--gold-border)" : "var(--accent-border)";
+                  (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
+                  (e.currentTarget as HTMLElement).style.transform = "";
+                }}
               >
-                <div className="space-y-3">
+                {/* Slim 3px top accent bar */}
+                <div
+                  className="h-[3px] w-full flex-shrink-0"
+                  style={{ backgroundColor: isGold ? "var(--gold)" : "var(--accent)" }}
+                />
+                <div className="p-6 space-y-3 flex-1">
                   <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-slate-800/80 border border-blue-100 dark:border-slate-700/80 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center"
+                      style={{
+                        backgroundColor: isGold ? "var(--gold-subtle)" : "var(--accent-subtle)",
+                        border: `1px solid ${isGold ? "var(--gold-border)" : "var(--accent-border)"}`,
+                        color: isGold ? "var(--gold)" : "var(--accent)",
+                      }}
+                    >
                       <Icon className="w-5 h-5" />
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 dark:text-slate-300 bg-blue-100/80 dark:bg-slate-800/90 border border-blue-200/60 dark:border-transparent px-2 py-0.5 rounded">
+                    <span
+                      className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded font-mono"
+                      style={{
+                        backgroundColor: isGold ? "var(--gold-subtle)" : "var(--accent-subtle)",
+                        color: isGold ? "var(--gold)" : "var(--accent)",
+                      }}
+                    >
                       {persona.badge}
                     </span>
                   </div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">{persona.title}</h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{persona.description}</p>
+                  <h3 className="text-base font-bold" style={{ color: "var(--text-primary)" }}>
+                    {persona.title}
+                  </h3>
+                  <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                    {persona.description}
+                  </p>
                 </div>
 
                 <Link
                   href={persona.href}
-                  className="inline-flex items-center justify-between pt-2 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 group"
+                  className="inline-flex items-center justify-between px-6 pb-5 text-xs font-semibold group"
+                  style={{ color: isGold ? "var(--gold)" : "var(--accent)" }}
                 >
                   <span>{persona.action}</span>
                   <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -311,107 +534,172 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Core Capabilities */}
-      <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 border-t border-slate-200 dark:border-slate-900">
-        <div className="text-center space-y-2 mb-10">
-          <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-            Dedicated Workflows
-          </span>
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">
-            Comprehensive BIS Domain Modules
-          </h2>
-        </div>
+      {/* ——— CAPABILITIES — Asymmetric bento ——— */}
+      <section
+        className="w-full border-t py-16"
+        style={{ borderColor: "var(--border)" }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center space-y-2 mb-10">
+            <span
+              className="text-xs font-bold uppercase tracking-wider"
+              style={{ color: "var(--gold)" }}
+            >
+              Dedicated Workflows
+            </span>
+            <h2
+              className="text-2xl sm:text-3xl font-bold font-display"
+              style={{ color: "var(--text-primary)" }}
+            >
+              Comprehensive BIS Domain Modules
+            </h2>
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {capabilities.map((cap, idx) => {
-            const Icon = cap.icon;
-            return (
-              <Link
-                key={idx}
-                href={cap.href}
-                className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900/40 hover:bg-slate-50 dark:hover:bg-slate-900/90 hover:border-blue-500/40 transition-all group flex flex-col justify-between space-y-4 shadow-sm hover:shadow-md"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center group-hover:scale-105 transition-transform">
-                      <Icon className="w-5 h-5" />
+          {/* Asymmetric bento: 1 large (spans 2 cols) + 3 standard */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {capabilities.map((cap, idx) => {
+              const Icon = cap.icon;
+              const isLarge = cap.isLarge;
+              return (
+                <Link
+                  key={idx}
+                  href={cap.href}
+                  className={`group p-6 rounded-2xl flex flex-col justify-between space-y-4 transition-all ${
+                    isLarge ? "md:col-span-2 lg:col-span-1 lg:row-span-2" : ""
+                  }`}
+                  style={{
+                    backgroundColor: isLarge ? "var(--accent)" : "var(--surface-raised)",
+                    border: `1px solid ${isLarge ? "transparent" : "var(--border)"}`,
+                    boxShadow: isLarge ? "0 8px 30px -8px rgba(37,56,120,0.4)" : "0 1px 3px 0 rgba(0,0,0,0.06)",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isLarge) {
+                      (e.currentTarget as HTMLElement).style.borderColor = "var(--gold-border)";
+                      (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 12px -2px rgba(184,134,11,0.15)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isLarge) {
+                      (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
+                      (e.currentTarget as HTMLElement).style.boxShadow = "0 1px 3px 0 rgba(0,0,0,0.06)";
+                    }
+                  }}
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform"
+                        style={{
+                          backgroundColor: isLarge ? "rgba(255,255,255,0.15)" : "var(--gold-subtle)",
+                          color: isLarge ? "#ffffff" : "var(--gold)",
+                          border: isLarge ? "1px solid rgba(255,255,255,0.2)" : "1px solid var(--gold-border)",
+                        }}
+                      >
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <span
+                        className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded font-mono"
+                        style={{
+                          backgroundColor: isLarge ? "rgba(255,255,255,0.15)" : "var(--surface-overlay)",
+                          color: isLarge ? "#ffffff" : "var(--text-muted)",
+                          border: isLarge ? "1px solid rgba(255,255,255,0.2)" : "1px solid var(--border)",
+                        }}
+                      >
+                        {cap.badge}
+                      </span>
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-0.5 rounded">
-                      {cap.badge}
-                    </span>
+                    <h3
+                      className="text-base font-semibold"
+                      style={{ color: isLarge ? "#ffffff" : "var(--text-primary)" }}
+                    >
+                      {cap.title}
+                    </h3>
+                    <p
+                      className="text-xs leading-relaxed"
+                      style={{ color: isLarge ? "rgba(255,255,255,0.75)" : "var(--text-secondary)" }}
+                    >
+                      {cap.description}
+                    </p>
                   </div>
-                  <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">
-                    {cap.title}
-                  </h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                    {cap.description}
-                  </p>
-                </div>
 
-                <div className="flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 group-hover:gap-2 transition-all">
-                  <span>Explore Module</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </div>
-              </Link>
-            );
-          })}
+                  <div
+                    className="flex items-center gap-1 text-xs font-semibold group-hover:gap-2 transition-all"
+                    style={{ color: isLarge ? "#ffffff" : "var(--gold)" }}
+                  >
+                    <span>Explore Module</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </section>
 
-      {/* Controlled Architecture Workflow */}
-      <section className="w-full border-t border-slate-200 dark:border-slate-900 bg-slate-50/60 dark:bg-slate-950/60 py-16">
+      {/* ——— WHY ENTERPRISE-READY — Horizontal numbered step rail ——— */}
+      <section
+        className="w-full border-t py-16"
+        style={{
+          borderColor: "var(--border)",
+          backgroundColor: "var(--surface-overlay)",
+        }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           <div className="text-center space-y-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+            <span
+              className="text-xs font-bold uppercase tracking-wider"
+              style={{ color: "var(--gold)" }}
+            >
               Technical Rigor
             </span>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">
+            <h2
+              className="text-2xl sm:text-3xl font-bold font-display"
+              style={{ color: "var(--text-primary)" }}
+            >
               Why Dev Dynasty SIH267107 is Enterprise-Ready
             </h2>
-            <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
+            <p
+              className="text-sm max-w-xl mx-auto"
+              style={{ color: "var(--text-secondary)" }}
+            >
               Real-time database search across 753 standards, Pydantic type safety, and zero synthetic data in production.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900/50 space-y-2 shadow-sm">
-              <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                <Cpu className="w-4 h-4" />
-              </div>
-              <h4 className="text-xs font-bold text-slate-900 dark:text-slate-200">1. Typed Intent Routing</h4>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                Queries are categorized into typed domain intents with strict tool allowlists; out-of-scope queries are blocked before database execution.
-              </p>
-            </div>
+          {/* Horizontal numbered step rail */}
+          <div className="relative">
+            {/* Connecting line (desktop only) */}
+            <div
+              className="hidden md:block absolute top-7 left-[calc(12.5%-1px)] right-[calc(12.5%-1px)] h-px"
+              style={{ backgroundColor: "var(--border-strong)" }}
+            />
 
-            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900/50 space-y-2 shadow-sm">
-              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-                <Database className="w-4 h-4" />
-              </div>
-              <h4 className="text-xs font-bold text-slate-900 dark:text-slate-200">2. Supabase pgvector RAG</h4>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                768-dimensional Gemini embeddings stored in PostgreSQL with HNSW indexing and PostgreSQL Websearch Full-Text Search (WFTS).
-              </p>
-            </div>
-
-            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900/50 space-y-2 shadow-sm">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                <Shield className="w-4 h-4" />
-              </div>
-              <h4 className="text-xs font-bold text-slate-900 dark:text-slate-200">3. Verified Official Provenance</h4>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                Every response preserves exact Government Gazette notification numbers, dates, and official LIMS laboratory scope endpoints.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900/50 space-y-2 shadow-sm">
-              <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                <CheckCircle2 className="w-4 h-4" />
-              </div>
-              <h4 className="text-xs font-bold text-slate-900 dark:text-slate-200">4. Multilingual & Hinglish</h4>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                Full support for English, pure Hindi (हिन्दी), and natural conversational Hinglish as used by Indian MSMEs and consumers.
-              </p>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-4">
+              {whySteps.map((step, idx) => {
+                const Icon = step.icon;
+                return (
+                  <div key={idx} className="flex flex-col items-center text-center md:items-start md:text-left">
+                    {/* Number circle */}
+                    <div
+                      className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 mb-4 relative z-10"
+                      style={{
+                        backgroundColor: "var(--accent)",
+                        boxShadow: "0 4px 16px -4px rgba(37,56,120,0.45)",
+                      }}
+                    >
+                      <span className="text-lg font-bold text-white font-mono">{step.num}</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      <h4 className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
+                        {step.title}
+                      </h4>
+                      <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                        {step.desc}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

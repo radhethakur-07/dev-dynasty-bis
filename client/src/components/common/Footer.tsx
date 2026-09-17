@@ -3,7 +3,41 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Shield, ExternalLink, AlertTriangle } from "lucide-react";
+import { ExternalLink, AlertTriangle } from "lucide-react";
+
+/* Small gold-on-indigo seal emblem for footer */
+const FooterSeal: React.FC = () => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 36 36"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      d="M18 3L4 8.5V18c0 7.5 5.8 14.2 14 16 8.2-1.8 14-8.5 14-16V8.5L18 3Z"
+      fill="#253878"
+    />
+    <text
+      x="18"
+      y="22"
+      textAnchor="middle"
+      fontSize="10"
+      fontWeight="700"
+      fontFamily="Georgia, serif"
+      fill="#B8860B"
+      letterSpacing="0.5"
+    >
+      IS
+    </text>
+    <g fill="#B8860B" opacity="0.7">
+      <circle cx="14" cy="26" r="1.1" />
+      <circle cx="18" cy="26" r="1.1" />
+      <circle cx="22" cy="26" r="1.1" />
+    </g>
+  </svg>
+);
 
 export const Footer: React.FC = () => {
   const pathname = usePathname();
@@ -14,7 +48,7 @@ export const Footer: React.FC = () => {
     <footer
       className="w-full border-t py-6 px-4 sm:px-6 lg:px-8"
       style={{
-        backgroundColor: "var(--surface-overlay)",
+        backgroundColor: "var(--surface-subtle)",
         borderColor: "var(--border)",
         color: "var(--text-muted)",
       }}
@@ -22,17 +56,9 @@ export const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         {/* Top row */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-          {/* Brand */}
+          {/* Brand with seal */}
           <div className="flex items-center gap-2.5">
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center"
-              style={{
-                backgroundColor: "var(--accent-subtle)",
-                border: "1px solid var(--accent-border)",
-              }}
-            >
-              <Shield className="w-3.5 h-3.5" style={{ color: "var(--accent)" }} />
-            </div>
+            <FooterSeal />
             <div className="text-xs">
               <span className="font-semibold" style={{ color: "var(--text-secondary)" }}>
                 Dev Dynasty
@@ -40,7 +66,7 @@ export const Footer: React.FC = () => {
               <span style={{ color: "var(--text-muted)" }}> · BIS Intelligence Platform · </span>
               <span
                 className="font-mono text-[10px]"
-                style={{ color: "var(--text-placeholder)" }}
+                style={{ color: "var(--gold)", opacity: 0.85 }}
               >
                 SIH267107
               </span>
@@ -56,10 +82,10 @@ export const Footer: React.FC = () => {
               href="https://www.bis.gov.in"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 transition-colors hover:opacity-80"
+              className="flex items-center gap-1 transition-colors"
               style={{ color: "var(--text-muted)" }}
               onMouseEnter={(e) =>
-                ((e.currentTarget as HTMLElement).style.color = "var(--text-primary)")
+                ((e.currentTarget as HTMLElement).style.color = "var(--accent)")
               }
               onMouseLeave={(e) =>
                 ((e.currentTarget as HTMLElement).style.color = "var(--text-muted)")
@@ -75,7 +101,7 @@ export const Footer: React.FC = () => {
               className="flex items-center gap-1 transition-colors"
               style={{ color: "var(--text-muted)" }}
               onMouseEnter={(e) =>
-                ((e.currentTarget as HTMLElement).style.color = "var(--text-primary)")
+                ((e.currentTarget as HTMLElement).style.color = "var(--accent)")
               }
               onMouseLeave={(e) =>
                 ((e.currentTarget as HTMLElement).style.color = "var(--text-muted)")

@@ -180,13 +180,12 @@ export const CertificationSteps: React.FC<CertificationStepsProps> = ({ data }) 
 
             {data.steps.map((step) => (
               <div key={step.step_number} className="relative">
-                {/* Step dot */}
+                {/* Step dot — solid indigo circle */}
                 <div
-                  className="absolute -left-7 top-1.5 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold z-10"
+                  className="absolute -left-7 top-1.5 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold z-10 text-white"
                   style={{
-                    backgroundColor: "var(--surface-raised)",
-                    border: "2px solid var(--accent)",
-                    color: "var(--accent)",
+                    backgroundColor: "var(--accent)",
+                    boxShadow: "0 0 0 3px var(--surface-overlay), 0 0 0 4px var(--accent-border)",
                   }}
                 >
                   {step.step_number}

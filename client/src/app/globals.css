@@ -5,34 +5,40 @@
 /* ============================================================
    FONTS
    ============================================================ */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 /* ============================================================
-   CSS CUSTOM PROPERTIES — THE DESIGN SYSTEM
+   CSS CUSTOM PROPERTIES — SOVEREIGN LEDGER DESIGN SYSTEM
    ============================================================ */
 :root {
-  /* Surfaces */
-  --surface-base:     #f8fafc;
-  --surface-raised:   #ffffff;
-  --surface-overlay:  #f1f5f9;
-  --surface-subtle:   #f0f4f8;
+  /* Surfaces — warm paper-white base */
+  --surface-base:     #FAF8F3;
+  --surface-raised:   #FFFFFF;
+  --surface-overlay:  #F3F0E8;
+  --surface-subtle:   #F0EDE4;
 
   /* Borders */
-  --border:           #e2e8f0;
-  --border-subtle:    #f1f5f9;
-  --border-strong:    #cbd5e1;
+  --border:           #DDD8CC;
+  --border-subtle:    #EBE7DF;
+  --border-strong:    #C5BFB0;
 
   /* Text */
-  --text-primary:     #0f172a;
-  --text-secondary:   #334155;
-  --text-muted:       #64748b;
-  --text-placeholder: #94a3b8;
+  --text-primary:     #1A1612;
+  --text-secondary:   #3A352C;
+  --text-muted:       #6B6356;
+  --text-placeholder: #9A9186;
 
-  /* Brand */
-  --accent:           #2563eb;
-  --accent-hover:     #1d4ed8;
-  --accent-subtle:    rgba(37, 99, 235, 0.08);
-  --accent-border:    rgba(37, 99, 235, 0.2);
+  /* Brand — Sovereign Indigo */
+  --accent:           #253878;
+  --accent-hover:     #1C2D65;
+  --accent-subtle:    rgba(37, 56, 120, 0.07);
+  --accent-border:    rgba(37, 56, 120, 0.18);
+
+  /* Gold — Certification Gold */
+  --gold:             #B8860B;
+  --gold-hover:       #9A7009;
+  --gold-subtle:      rgba(184, 134, 11, 0.08);
+  --gold-border:      rgba(184, 134, 11, 0.22);
 
   /* Status */
   --success:          #059669;
@@ -41,19 +47,20 @@
   --info:             #0284c7;
 
   /* Chat */
-  --chat-user-bg:     #2563eb;
+  --chat-user-bg:     #253878;
   --chat-user-text:   #ffffff;
-  --chat-ai-bg:       #ffffff;
-  --chat-ai-border:   #e2e8f0;
-  --chat-ai-text:     #0f172a;
+  --chat-ai-bg:       #FFFFFF;
+  --chat-ai-border:   #DDD8CC;
+  --chat-ai-text:     #1A1612;
+  --chat-citation-border: #B8860B;
 
   /* Sidebar */
-  --sidebar-bg:       #ffffff;
-  --sidebar-border:   #e2e8f0;
-  --sidebar-hover:    #f8fafc;
-  --sidebar-active-bg: #eff6ff;
-  --sidebar-active-border: #bfdbfe;
-  --sidebar-active-text: #1d4ed8;
+  --sidebar-bg:       #FFFFFF;
+  --sidebar-border:   #DDD8CC;
+  --sidebar-hover:    #FAF8F3;
+  --sidebar-active-bg: rgba(37, 56, 120, 0.07);
+  --sidebar-active-border: rgba(37, 56, 120, 0.22);
+  --sidebar-active-text: #253878;
 }
 
 .dark {
@@ -74,11 +81,17 @@
   --text-muted:       #94a3b8;
   --text-placeholder: #475569;
 
-  /* Brand */
-  --accent:           #3b82f6;
-  --accent-hover:     #60a5fa;
-  --accent-subtle:    rgba(59, 130, 246, 0.1);
-  --accent-border:    rgba(59, 130, 246, 0.2);
+  /* Brand — Sovereign Indigo (brightened for dark) */
+  --accent:           #4F72C8;
+  --accent-hover:     #6B8AD4;
+  --accent-subtle:    rgba(79, 114, 200, 0.12);
+  --accent-border:    rgba(79, 114, 200, 0.25);
+
+  /* Gold — brightened for dark */
+  --gold:             #D4A017;
+  --gold-hover:       #E8B822;
+  --gold-subtle:      rgba(212, 160, 23, 0.12);
+  --gold-border:      rgba(212, 160, 23, 0.25);
 
   /* Status */
   --success:          #10b981;
@@ -87,18 +100,19 @@
   --info:             #38bdf8;
 
   /* Chat */
-  --chat-user-bg:     #1d4ed8;
+  --chat-user-bg:     #253878;
   --chat-user-text:   #ffffff;
   --chat-ai-bg:       #0d1424;
   --chat-ai-border:   #1e293b;
   --chat-ai-text:     #e2e8f0;
+  --chat-citation-border: #D4A017;
 
   /* Sidebar */
   --sidebar-bg:       #080c14;
   --sidebar-border:   #1e293b;
   --sidebar-hover:    #0d1424;
-  --sidebar-active-bg: rgba(37, 99, 235, 0.12);
-  --sidebar-active-border: rgba(59, 130, 246, 0.3);
+  --sidebar-active-bg: rgba(79, 114, 200, 0.12);
+  --sidebar-active-border: rgba(79, 114, 200, 0.3);
   --sidebar-active-text: #93c5fd;
 }
 
@@ -124,6 +138,22 @@ body {
   transition: background-color 0.2s ease, color 0.15s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================
+   DISPLAY FONT UTILITY (Fraunces)
+   ============================================================ */
+.font-display {
+  font-family: "Fraunces", Georgia, serif;
+  font-optical-sizing: auto;
+}
+
+/* ============================================================
+   PAPER TEXTURE UTILITY
+   ============================================================ */
+.bg-paper {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)' opacity='0.025'/%3E%3C/svg%3E");
+  background-repeat: repeat;
 }
 
 /* ============================================================
@@ -203,11 +233,11 @@ body {
 }
 
 .prose li::marker {
-  color: var(--accent);
+  color: var(--gold);
 }
 
 .prose ol li::marker {
-  color: var(--accent);
+  color: var(--gold);
   font-weight: 600;
 }
 
@@ -241,7 +271,7 @@ body {
 }
 
 .prose blockquote {
-  border-left: 3px solid var(--accent);
+  border-left: 3px solid var(--gold);
   padding-left: 1em;
   color: var(--text-muted);
   font-style: italic;
@@ -308,7 +338,7 @@ body {
    FOCUS STYLES
    ============================================================ */
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--gold);
   outline-offset: 2px;
   border-radius: 0.25rem;
 }
@@ -363,6 +393,34 @@ textarea.auto-resize {
   background-color: var(--chat-ai-bg);
   border-color: var(--chat-ai-border);
   color: var(--chat-ai-text);
+}
+
+/* Citation-containing AI messages get gold left accent */
+.chat-message-ai.has-citation {
+  border-left: 3px solid var(--chat-citation-border);
+}
+
+/* ============================================================
+   GOLD GAZETTE STAMP (CitationPanel chip)
+   ============================================================ */
+.gazette-chip {
+  border-left: 3px solid var(--gold);
+  background-color: var(--gold-subtle);
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+}
+
+/* ============================================================
+   SCROLL REVEAL ANIMATION
+   ============================================================ */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* ============================================================
