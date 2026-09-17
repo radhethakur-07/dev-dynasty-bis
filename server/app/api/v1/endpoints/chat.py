@@ -19,6 +19,27 @@ def _is_valid_uuid(value: str) -> bool:
         return False
 
 
+def _ensure_session_exists(session_id: str, user_id: Optional[str] = None, title: Optional[str] = "New Chat"):
+    """Ensure session exists in chat_sessions so foreign key in messages table does not fail."""
+    if not session_id or not _is_valid_uuid(session_id):
+        return
+    try:
+        supabase = get_supabase_client()
+        if supabase:
+            res = supabase.table("chat_sessions").select("id").eq("id", session_id).execute()
+            if not res.data:
+                insert_data = {
+                    "id": session_id,
+                    "title": title or "New Chat",
+                    "language": "en"
+                }
+                if user_id:
+                    insert_data["user_id"] = user_id
+                supabase.table("chat_sessions").insert(insert_data).execute()
+    except Exception as e:
+        logger.debug(f"[CHAT] Ensure session exists skipped: {e}")
+
+
 def _auto_update_session_title(session_id: str, message: str):
     """Auto-update session title from 'New Chat' to the user's initial query."""
     if not session_id or not _is_valid_uuid(session_id):
@@ -40,6 +61,7 @@ def _persist_message(
     session_id: str,
     role: str,
     content: str,
+    user_id: Optional[str] = None,
     intent: str = None,
     tool_called: str = None,
     response_type: str = None,
@@ -52,6 +74,9 @@ def _persist_message(
     try:
         supabase = get_supabase_client()
         if supabase:
+            # Guarantee session exists first to prevent foreign key failure
+            _ensure_session_exists(session_id, user_id)
+
             payload: Dict[str, Any] = {
                 "session_id": session_id,
                 "role": role,
@@ -84,9 +109,12 @@ async def chat_endpoint(
 
         # Persist user and assistant messages to database (best-effort)
         session_id = str(response.session_id) if response.session_id else None
+        user_id = current_user["id"] if current_user and "id" in current_user else None
+
         if session_id:
-            # 1. Persist user message and auto-update session title
-            _persist_message(session_id, "user", request.message)
+            # 1. Guarantee session exists and persist user message
+            _ensure_session_exists(session_id, user_id=user_id)
+            _persist_message(session_id, "user", request.message, user_id=user_id)
             _auto_update_session_title(session_id, request.message)
 
             # 2. Extract assistant response text
@@ -109,6 +137,7 @@ async def chat_endpoint(
                 session_id,
                 "assistant",
                 assistant_text,
+                user_id=user_id,
                 intent=response.intent,
                 tool_called=response.tool_called,
                 response_type=response_type,
