@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Conversation } from "@/lib/chatStorage";
+import { Conversation } from "@/types/api";
 import {
   Plus,
   Trash2,

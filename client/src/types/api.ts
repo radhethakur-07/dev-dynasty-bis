@@ -172,3 +172,13 @@ export interface ChatMessage {
   toolCalled?: string | null;
   timestamp: string;
 }
+
+export interface Conversation {
+  id: string;
+  title: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type ChatSession = Conversation;
+

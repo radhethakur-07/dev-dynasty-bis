@@ -60,49 +60,65 @@ export async function verifyEmail(email: string, code: string) {
   return response.json();
 }
 
-export async function getUserSessions() {
+export async function getUserSessions(): Promise<Array<{ id: string; title: string; created_at?: string }>> {
   const response = await fetch(`${API_BASE_URL}/api/v1/sessions`, {
     headers: { ...getAuthHeaders() },
   });
-  if (!response.ok) throw new Error("Failed to load sessions");
-  return response.json();
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to load sessions");
+  }
+  const data = await response.json();
+  return Array.isArray(data) ? data : (data.sessions || []);
 }
 
-export async function getSessionMessages(sessionId: string) {
+export async function getSessionMessages(sessionId: string): Promise<Array<any>> {
   const response = await fetch(`${API_BASE_URL}/api/v1/sessions/${sessionId}/messages`, {
     headers: { ...getAuthHeaders() },
   });
-  if (!response.ok) throw new Error("Failed to load session messages");
-  return response.json();
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to load session messages");
+  }
+  const data = await response.json();
+  return Array.isArray(data) ? data : (data.messages || []);
 }
 
-export async function createSession() {
+export async function createSession(title: string = "New Chat"): Promise<{ id: string; title: string; created_at?: string }> {
   const response = await fetch(`${API_BASE_URL}/api/v1/sessions`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...getAuthHeaders() },
-    body: JSON.stringify({ title: "New Chat" }),
+    body: JSON.stringify({ title }),
   });
-  if (!response.ok) throw new Error("Failed to create session");
-  return response.json();
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to create session");
+  }
+  const data = await response.json();
+  return data.session || data;
 }
 
-export async function deleteSession(sessionId: string) {
+export async function deleteSession(sessionId: string): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/v1/sessions/${sessionId}`, {
     method: "DELETE",
     headers: { ...getAuthHeaders() },
   });
-  if (!response.ok) throw new Error("Failed to delete session");
-  return response.json();
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to delete session");
+  }
 }
 
-export async function renameSession(sessionId: string, title: string) {
+export async function renameSession(sessionId: string, title: string): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/v1/sessions/${sessionId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json", ...getAuthHeaders() },
     body: JSON.stringify({ title }),
   });
-  if (!response.ok) throw new Error("Failed to rename session");
-  return response.json();
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to rename session");
+  }
 }
 
 export async function sendChatMessage(

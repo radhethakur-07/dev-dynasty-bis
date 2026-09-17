@@ -102,7 +102,7 @@ async def get_session_messages(
             raise HTTPException(status_code=404, detail="Session not found")
 
         result = supabase.table("messages") \
-            .select("id, role, content, intent, tool_called, created_at") \
+            .select("id, role, content, intent, tool_called, response_type, structured_payload, created_at") \
             .eq("session_id", session_id) \
             .order("created_at", desc=False) \
             .execute()
