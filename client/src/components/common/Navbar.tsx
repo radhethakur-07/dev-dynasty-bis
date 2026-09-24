@@ -103,18 +103,14 @@ export const Navbar: React.FC = () => {
 
   return (
     <header
-      className={`sticky top-0 z-50 w-full transition-all duration-200 border-b`}
+      className="sticky top-0 z-50 w-full backdrop-blur-md transition-all duration-200 border-b"
       style={{
         backgroundColor: "var(--surface-raised)",
         borderColor: "var(--border)",
-        boxShadow: scrolled ? "0 1px 8px 0 rgba(37,56,120,0.08)" : undefined,
+        boxShadow: scrolled ? "0 2px 12px 0 rgba(37,56,120,0.08)" : undefined,
       }}
     >
-      <div
-        className="absolute inset-0 backdrop-blur-md"
-        style={{ backgroundColor: "var(--surface-raised)", opacity: 0.93 }}
-      />
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4 z-10">
         {/* Brand — Two-tone seal emblem */}
         <Link
           href="/"
@@ -160,7 +156,7 @@ export const Navbar: React.FC = () => {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150`}
+                className="relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150"
                 style={
                   isActive
                     ? {
@@ -226,15 +222,7 @@ export const Navbar: React.FC = () => {
             type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="md:hidden p-2 rounded-lg transition-colors"
-            style={{ color: "var(--text-muted)" }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.backgroundColor = "var(--surface-overlay)";
-              (e.currentTarget as HTMLElement).style.color = "var(--text-primary)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.backgroundColor = "";
-              (e.currentTarget as HTMLElement).style.color = "var(--text-muted)";
-            }}
+            style={{ color: "var(--text-primary)" }}
             aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
             aria-expanded={isMobileMenuOpen}
           >
@@ -250,7 +238,7 @@ export const Navbar: React.FC = () => {
       {/* Mobile Navigation Drawer */}
       {isMobileMenuOpen && (
         <div
-          className="md:hidden border-t animate-slide-down"
+          className="md:hidden relative z-30 border-t animate-slide-down shadow-xl"
           style={{
             backgroundColor: "var(--surface-raised)",
             borderColor: "var(--border)",
@@ -268,25 +256,40 @@ export const Navbar: React.FC = () => {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-colors"
                   style={
                     isActive
                       ? {
                           backgroundColor: "var(--accent-subtle)",
                           color: "var(--accent)",
                           borderLeft: "3px solid var(--gold)",
-                          paddingLeft: "10px",
+                          paddingLeft: "12px",
                         }
                       : {
-                          color: "var(--text-secondary)",
+                          color: "var(--text-primary)",
+                          backgroundColor: "transparent",
                         }
                   }
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      (e.currentTarget as HTMLElement).style.backgroundColor = "var(--surface-overlay)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+                    }
+                  }}
                 >
-                  <Icon className="w-4 h-4 flex-shrink-0" />
-                  <span>{item.name}</span>
+                  <Icon
+                    className="w-4 h-4 flex-shrink-0"
+                    style={{ color: isActive ? "var(--accent)" : "var(--gold)" }}
+                  />
+                  <span className="font-semibold">{item.name}</span>
                   {isActive && (
                     <span
-                      className="ml-auto w-1.5 h-1.5 rounded-full"
+                      className="ml-auto w-2 h-2 rounded-full"
                       style={{ backgroundColor: "var(--gold)" }}
                     />
                   )}
@@ -296,15 +299,19 @@ export const Navbar: React.FC = () => {
 
             {/* Status in mobile */}
             <div
-              className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs"
-              style={{ color: "var(--text-muted)" }}
+              className="flex items-center gap-2 px-3.5 py-2.5 mt-2 rounded-xl text-xs border"
+              style={{
+                backgroundColor: "var(--surface-overlay)",
+                borderColor: "var(--border)",
+                color: "var(--text-muted)",
+              }}
             >
               <span
-                className={`w-1.5 h-1.5 rounded-full ${status.color} ${
+                className={`w-2 h-2 rounded-full ${status.color} ${
                   status.pulse ? "animate-pulse" : ""
                 }`}
               />
-              <span>Backend: {status.label}</span>
+              <span className="font-medium">Backend: {status.label}</span>
             </div>
           </div>
         </div>
