@@ -60,11 +60,22 @@ export async function verifyEmail(email: string, code: string) {
   return response.json();
 }
 
+function handleAuthError(status: number) {
+  if (status === 401 && typeof window !== "undefined") {
+    localStorage.removeItem("bis-auth-token");
+    localStorage.removeItem("bis-auth-user");
+    if (!window.location.pathname.startsWith("/login") && !window.location.pathname.startsWith("/register")) {
+      window.location.href = "/login?expired=1";
+    }
+  }
+}
+
 export async function getUserSessions(): Promise<Array<{ id: string; title: string; created_at?: string }>> {
   const response = await fetch(`${API_BASE_URL}/api/v1/sessions`, {
     headers: { ...getAuthHeaders() },
   });
   if (!response.ok) {
+    handleAuthError(response.status);
     const err = await response.json().catch(() => ({}));
     throw new Error(err.detail || "Failed to load sessions");
   }
@@ -77,6 +88,7 @@ export async function getSessionMessages(sessionId: string): Promise<Array<any>>
     headers: { ...getAuthHeaders() },
   });
   if (!response.ok) {
+    handleAuthError(response.status);
     const err = await response.json().catch(() => ({}));
     throw new Error(err.detail || "Failed to load session messages");
   }
@@ -91,6 +103,7 @@ export async function createSession(title: string = "New Chat"): Promise<{ id: s
     body: JSON.stringify({ title }),
   });
   if (!response.ok) {
+    handleAuthError(response.status);
     const err = await response.json().catch(() => ({}));
     throw new Error(err.detail || "Failed to create session");
   }

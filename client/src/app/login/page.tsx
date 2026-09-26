@@ -31,6 +31,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const justRegistered = searchParams.get("registered") === "1";
+  const sessionExpired = searchParams.get("expired") === "1";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,6 +141,21 @@ function LoginForm() {
           <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>
             Access the BIS Intelligence Platform
           </p>
+
+          {/* Session expired notice */}
+          {sessionExpired && (
+            <div
+              className="flex items-center gap-2 p-3 rounded-xl text-sm mb-4"
+              style={{
+                backgroundColor: "rgba(217, 119, 6, 0.08)",
+                border: "1px solid rgba(217, 119, 6, 0.25)",
+                color: "var(--warning)",
+              }}
+            >
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>Your session expired. Please sign in again.</span>
+            </div>
+          )}
 
           {/* Success notice */}
           {justRegistered && (

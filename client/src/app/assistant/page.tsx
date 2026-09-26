@@ -414,9 +414,8 @@ function AssistantChat() {
 
   return (
     <div
-      className="flex overflow-hidden"
+      className="flex overflow-hidden h-[calc(100vh-4rem)] h-[calc(100dvh-4rem)]"
       style={{
-        height: "calc(100vh - 4rem)",
         backgroundColor: "var(--surface-base)",
       }}
     >

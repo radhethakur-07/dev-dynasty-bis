@@ -111,28 +111,28 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ onPromptClick, language 
   const items = suggestions[language] || suggestions.en;
 
   return (
-    <div className="flex flex-col items-center justify-center h-full px-4 py-12 animate-fade-in">
+    <div className="flex flex-col items-center justify-start md:justify-center min-h-full px-4 py-6 md:py-10 animate-fade-in w-full max-w-4xl mx-auto">
       {/* Seal logo mark */}
-      <div className="mb-8 flex flex-col items-center gap-4">
+      <div className="mb-4 md:mb-6 flex flex-col items-center gap-2.5">
         <div
-          className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg"
+          className="w-12 h-12 md:w-16 md:h-16 rounded-2xl flex items-center justify-center shadow-lg"
           style={{
             background: "linear-gradient(135deg, #1C2D65 0%, #253878 50%, #4F72C8 100%)",
             boxShadow: "0 8px 32px -8px rgba(37, 56, 120, 0.4)",
           }}
         >
-          <Shield className="w-8 h-8 text-white" />
+          <Shield className="w-6 h-6 md:w-8 md:h-8 text-white" />
         </div>
         <div className="text-center space-y-1">
           <h2
-            className="text-xl font-bold tracking-tight font-display"
+            className="text-lg md:text-xl font-bold tracking-tight font-display"
             style={{ color: "var(--text-primary)" }}
           >
             {language === "hi"
               ? "BIS इंटेलिजेंस असिस्टेंट"
               : "BIS Intelligence Assistant"}
           </h2>
-          <p className="text-sm max-w-sm" style={{ color: "var(--text-muted)" }}>
+          <p className="text-xs md:text-sm max-w-sm" style={{ color: "var(--text-muted)" }}>
             {language === "hi"
               ? "भारतीय मानकों, प्रमाणन और हॉलमार्किंग के बारे में पूछें"
               : "Ask about Indian Standards, certification, hallmarking, and testing labs"}
