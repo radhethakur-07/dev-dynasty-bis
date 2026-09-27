@@ -6,7 +6,7 @@ import { Language, ChatMessage, Conversation } from "@/types/api";
 import { ChatArea } from "@/components/chat/ChatArea";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { ConversationSidebar } from "@/components/chat/ConversationSidebar";
-import { Shield, Sparkles, PanelLeft } from "lucide-react";
+import { Shield, Sparkles, PanelLeft, Loader2 } from "lucide-react";
 import {
   sendChatMessage,
   getUserSessions,
@@ -17,49 +17,6 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
-// Storage keys for instant-restore on refresh
-const ACTIVE_SESSION_KEY = "bis-active-session-id";
-const CACHED_SESSIONS_KEY = "bis-cached-sessions";
-const CACHED_MESSAGES_PREFIX = "bis-cached-msgs-";
-
-function getCachedSessions(): Conversation[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(CACHED_SESSIONS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveCachedSessions(sessions: Conversation[]) {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(CACHED_SESSIONS_KEY, JSON.stringify(sessions));
-  } catch {
-    /* ignore */
-  }
-}
-
-function getCachedMessages(sessionId: string): ChatMessage[] {
-  if (typeof window === "undefined" || !sessionId) return [];
-  try {
-    const raw = localStorage.getItem(`${CACHED_MESSAGES_PREFIX}${sessionId}`);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveCachedMessages(sessionId: string, msgs: ChatMessage[]) {
-  if (typeof window === "undefined" || !sessionId) return;
-  try {
-    localStorage.setItem(`${CACHED_MESSAGES_PREFIX}${sessionId}`, JSON.stringify(msgs));
-  } catch {
-    /* ignore */
-  }
-}
-
 function AssistantChat() {
   const searchParams = useSearchParams();
   const queryParam = searchParams.get("q");
@@ -68,56 +25,38 @@ function AssistantChat() {
 
   const [language, setLanguage] = useState<Language>("en");
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Initialize immediately from cache so UI is instant on page refresh
-  const [conversations, setConversations] = useState<Conversation[]>(() => getCachedSessions());
-  const [activeConvId, setActiveConvId] = useState<string | null>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem(ACTIVE_SESSION_KEY);
-      if (saved) return saved;
-    }
-    const cached = getCachedSessions();
-    return cached.length > 0 ? cached[0].id : null;
-  });
-
-  const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    if (typeof window !== "undefined") {
-      const savedId = localStorage.getItem(ACTIVE_SESSION_KEY);
-      if (savedId) return getCachedMessages(savedId);
-      const cached = getCachedSessions();
-      if (cached.length > 0) return getCachedMessages(cached[0].id);
-    }
-    return [];
-  });
-
+  // 100% Database-driven state — NO localStorage chat caching
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeConvId, setActiveConvId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [pendingInput, setPendingInput] = useState("");
 
   useEffect(() => {
     setSidebarOpen(window.innerWidth >= 1024);
-  }, []);
 
-  // Update active session memory
-  const updateActiveSession = (id: string | null) => {
-    setActiveConvId(id);
+    // Clean up any legacy localStorage cache keys from previous versions
     if (typeof window !== "undefined") {
-      if (id) {
-        localStorage.setItem(ACTIVE_SESSION_KEY, id);
-      } else {
-        localStorage.removeItem(ACTIVE_SESSION_KEY);
+      try {
+        localStorage.removeItem("bis-cached-sessions");
+        localStorage.removeItem("bis-assistant-conversations");
+        localStorage.removeItem("bis-active-session-id");
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith("bis-cached-msgs-") || key.startsWith("bis-db-cache-")) {
+            localStorage.removeItem(key);
+          }
+        });
+      } catch {
+        /* ignore */
       }
     }
-  };
+  }, []);
 
-  // Helper to load messages for a specific session directly from Database
+  // Helper to load messages for a specific session directly from Database (Supabase)
   const loadMessagesForSession = useCallback(async (sessionId: string) => {
-    // 1. Show cached messages immediately for instant response
-    const cached = getCachedMessages(sessionId);
-    if (cached.length > 0) {
-      setMessages(cached);
-    }
-
-    // 2. Fetch latest from Database
+    setIsLoading(true);
     try {
       const msgs = await getSessionMessages(sessionId);
       if (msgs && msgs.length > 0) {
@@ -133,24 +72,23 @@ function AssistantChat() {
             : new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         }));
         setMessages(mapped);
-        saveCachedMessages(sessionId, mapped);
-      } else if (cached.length === 0) {
+      } else {
         setMessages([]);
       }
     } catch (err) {
       console.error(`[ASSISTANT] Failed to load messages for session ${sessionId}:`, err);
-      // Fallback to cached if available
-      if (cached.length > 0) {
-        setMessages(cached);
-      }
+      setMessages([]);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
-  // 1. Initial load from Database (Supabase) + sync with cached state
+  // 1. Initial load from Database (Supabase) on mount / login
   useEffect(() => {
     let isMounted = true;
 
     async function loadSessionsFromDatabase() {
+      setIsInitialLoading(true);
       try {
         const sessions = await getUserSessions();
         if (!isMounted) return;
@@ -163,23 +101,11 @@ function AssistantChat() {
             updated_at: s.created_at || new Date().toISOString(),
           }));
           setConversations(mapped);
-          saveCachedSessions(mapped);
-
-          // Find which session to select: saved active session, or first session
-          const savedActiveId = typeof window !== "undefined" ? localStorage.getItem(ACTIVE_SESSION_KEY) : null;
-          const targetSessionId = (savedActiveId && mapped.some((c) => c.id === savedActiveId))
-            ? savedActiveId
-            : mapped[0].id;
-
-          updateActiveSession(targetSessionId);
-          await loadMessagesForSession(targetSessionId);
+          const firstSessionId = mapped[0].id;
+          setActiveConvId(firstSessionId);
+          await loadMessagesForSession(firstSessionId);
         } else {
-          // If no sessions exist in DB, create one
-          const cached = getCachedSessions();
-          if (cached.length > 0) {
-            // If local cache had sessions, keep them
-            return;
-          }
+          // If no sessions exist in DB for this user, create the first clean session in Supabase
           const newSession = await createSession("New Chat");
           if (!isMounted) return;
           const newConv: Conversation = {
@@ -189,12 +115,15 @@ function AssistantChat() {
             updated_at: newSession.created_at || new Date().toISOString(),
           };
           setConversations([newConv]);
-          saveCachedSessions([newConv]);
-          updateActiveSession(newSession.id);
+          setActiveConvId(newSession.id);
           setMessages([]);
         }
       } catch (err) {
         console.error("[ASSISTANT] Error initializing sessions from database:", err);
+      } finally {
+        if (isMounted) {
+          setIsInitialLoading(false);
+        }
       }
     }
 
@@ -213,7 +142,7 @@ function AssistantChat() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryParam, activeConvId]);
 
-  // 3. Send Message Handler
+  // 3. Send Message Handler — 100% cloud DB persisted
   const handleSendMessage = async (userText: string) => {
     const trimmed = userText.trim();
     if (!trimmed || isLoading) return;
@@ -232,17 +161,15 @@ function AssistantChat() {
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
-        const updatedList = [newConv, ...conversations];
-        setConversations(updatedList);
-        saveCachedSessions(updatedList);
-        updateActiveSession(currentSessionId);
+        setConversations((prev) => [newConv, ...prev]);
+        setActiveConvId(currentSessionId);
       } catch (err) {
         console.error("[ASSISTANT] Failed to ensure active session:", err);
       }
     } else {
       // Auto-update conversation title in UI if it was "New Chat"
-      setConversations((prev) => {
-        const updated = prev.map((c) => {
+      setConversations((prev) =>
+        prev.map((c) => {
           if (c.id === currentSessionId && (c.title === "New Chat" || c.title === "New Conversation")) {
             return {
               ...c,
@@ -250,10 +177,8 @@ function AssistantChat() {
             };
           }
           return c;
-        });
-        saveCachedSessions(updated);
-        return updated;
-      });
+        })
+      );
     }
 
     const userMsg: ChatMessage = {
@@ -263,12 +188,7 @@ function AssistantChat() {
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
-    const newMessagesList = [...messages, userMsg];
-    setMessages(newMessagesList);
-    if (currentSessionId) {
-      saveCachedMessages(currentSessionId, newMessagesList);
-    }
-
+    setMessages((prev) => [...prev, userMsg]);
     setIsLoading(true);
 
     try {
@@ -302,11 +222,7 @@ function AssistantChat() {
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
 
-      const finalMessages = [...newMessagesList, assistantMsg];
-      setMessages(finalMessages);
-      if (currentSessionId) {
-        saveCachedMessages(currentSessionId, finalMessages);
-      }
+      setMessages((prev) => [...prev, assistantMsg]);
     } catch (err: unknown) {
       const isTimeout =
         err instanceof Error &&
@@ -321,19 +237,14 @@ function AssistantChat() {
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
 
-      const finalWithErr = [...newMessagesList, errorMsg];
-      setMessages(finalWithErr);
-      if (currentSessionId) {
-        saveCachedMessages(currentSessionId, finalWithErr);
-      }
+      setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 4. Create New Chat in Database
+  // 4. Create New Chat directly in Database
   const handleNewChat = async () => {
-    // If current conversation is already empty, just stay on it
     if (messages.length === 0 && activeConvId) {
       return;
     }
@@ -347,10 +258,8 @@ function AssistantChat() {
         created_at: s.created_at || new Date().toISOString(),
         updated_at: s.created_at || new Date().toISOString(),
       };
-      const updatedList = [newConv, ...conversations.filter((c) => c.id !== s.id)];
-      setConversations(updatedList);
-      saveCachedSessions(updatedList);
-      updateActiveSession(s.id);
+      setConversations((prev) => [newConv, ...prev.filter((c) => c.id !== s.id)]);
+      setActiveConvId(s.id);
       setMessages([]);
       setPendingInput("");
     } catch (err) {
@@ -363,28 +272,22 @@ function AssistantChat() {
   // 5. Select & Switch Conversation directly from Database
   const handleSelectConversation = async (sessionId: string) => {
     if (sessionId === activeConvId) return;
-    updateActiveSession(sessionId);
+    setActiveConvId(sessionId);
     setPendingInput("");
-    setIsLoading(true);
     await loadMessagesForSession(sessionId);
-    setIsLoading(false);
   };
 
   // 6. Delete Conversation from Database
   const handleDeleteConversation = async (sessionId: string) => {
     try {
       await deleteSession(sessionId);
-      if (typeof window !== "undefined") {
-        localStorage.removeItem(`${CACHED_MESSAGES_PREFIX}${sessionId}`);
-      }
       const remaining = conversations.filter((c) => c.id !== sessionId);
       setConversations(remaining);
-      saveCachedSessions(remaining);
 
       if (sessionId === activeConvId) {
         if (remaining.length > 0) {
           const nextId = remaining[0].id;
-          updateActiveSession(nextId);
+          setActiveConvId(nextId);
           await loadMessagesForSession(nextId);
         } else {
           await handleNewChat();
@@ -399,9 +302,9 @@ function AssistantChat() {
   const handleRenameConversation = async (sessionId: string, title: string) => {
     try {
       await renameSession(sessionId, title);
-      const updated = conversations.map((c) => (c.id === sessionId ? { ...c, title } : c));
-      setConversations(updated);
-      saveCachedSessions(updated);
+      setConversations((prev) =>
+        prev.map((c) => (c.id === sessionId ? { ...c, title } : c))
+      );
     } catch (err) {
       console.error("[ASSISTANT] Failed to rename session in database:", err);
     }
@@ -513,13 +416,20 @@ function AssistantChat() {
         </div>
 
         {/* Message area */}
-        <ChatArea
-          messages={messages}
-          isLoading={isLoading}
-          language={language}
-          onQuickPrompt={handleSendMessage}
-          onPopulateInput={handlePopulateInput}
-        />
+        {isInitialLoading ? (
+          <div className="flex-1 flex flex-col items-center justify-center gap-3" style={{ backgroundColor: "var(--surface-base)" }}>
+            <Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--accent)" }} />
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>Loading your conversations...</p>
+          </div>
+        ) : (
+          <ChatArea
+            messages={messages}
+            isLoading={isLoading}
+            language={language}
+            onQuickPrompt={handleSendMessage}
+            onPopulateInput={handlePopulateInput}
+          />
+        )}
 
         {/* Input */}
         <ChatInput
