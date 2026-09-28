@@ -169,17 +169,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             style={
               isEmpty || isLoading
                 ? {
-                    backgroundColor: "var(--surface-overlay)",
-                    border: "1px solid var(--border)",
-                    color: "var(--text-placeholder)",
-                    opacity: 0.6,
-                  }
+                  backgroundColor: "var(--surface-overlay)",
+                  border: "1px solid var(--border)",
+                  color: "var(--text-placeholder)",
+                  opacity: 0.6,
+                }
                 : {
-                    backgroundColor: "var(--accent)",
-                    border: "1px solid var(--accent)",
-                    color: "#ffffff",
-                    boxShadow: "0 2px 8px -2px var(--accent)",
-                  }
+                  backgroundColor: "var(--accent)",
+                  border: "1px solid var(--accent)",
+                  color: "#ffffff",
+                  boxShadow: "0 2px 8px -2px var(--accent)",
+                }
             }
             onMouseEnter={(e) => {
               if (!isEmpty && !isLoading) {
@@ -212,7 +212,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         className="flex items-center justify-between mt-2 px-1 text-[11px]"
         style={{ color: "var(--text-placeholder)" }}
       >
-        <span>BIS Intelligence · SIH267107 · Grounded Knowledge</span>
+        <span>BIS Intelligence · SIH26107 · Grounded Knowledge</span>
         <span className="hidden sm:inline">
           <kbd
             className="px-1.5 py-0.5 rounded text-[10px] font-mono"

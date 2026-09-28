@@ -1,5 +1,5 @@
 -- ============================================================
--- DEV DYNASTY — SIH267107: BIS INTELLIGENCE ASSISTANT
+-- DEV DYNASTY — SIH26107: BIS INTELLIGENCE ASSISTANT
 -- SUPABASE POSTGRESQL + PGVECTOR DATABASE SCHEMA
 -- ============================================================
 

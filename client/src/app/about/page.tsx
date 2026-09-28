@@ -16,7 +16,7 @@ export default function AboutPage() {
           }}
         >
           <Shield className="w-3.5 h-3.5" />
-          <span>Project Governance &amp; Boundaries · SIH267107</span>
+          <span>Project Governance &amp; Boundaries · SIH26107</span>
         </div>
         <h1
           className="text-3xl sm:text-4xl font-extrabold tracking-tight"
@@ -25,7 +25,7 @@ export default function AboutPage() {
           Dev Dynasty — BIS Intelligence Platform
         </h1>
         <p className="text-sm leading-relaxed max-w-2xl" style={{ color: "var(--text-secondary)" }}>
-          Developed for the Smart India Hackathon under problem statement SIH267107 to make Indian Standards
+          Developed for the Smart India Hackathon under problem statement SIH26107 to make Indian Standards
           (IS), conformity schemes, and BIS services easily discoverable through evidence-grounded AI.
         </p>
       </div>

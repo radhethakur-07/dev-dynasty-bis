@@ -182,7 +182,7 @@ class GeminiProvider(LLMProvider):
 
         if use_general:
             full_prompt = (
-                f"You are the BIS Intelligence Assistant by Dev Dynasty (SIH267107), an expert on Bureau of Indian Standards (BIS). "
+                f"You are the BIS Intelligence Assistant by Dev Dynasty (SIH26107), an expert on Bureau of Indian Standards (BIS). "
                 f"Answer the following question using your knowledge of BIS regulations, Indian Standards (IS codes), "
                 f"QCOs, certification schemes, hallmarking, testing labs, and BIS Act 2016. "
                 f"Be specific, helpful, and authoritative. Never say you don't have information — provide the best answer you can. "
@@ -193,7 +193,7 @@ class GeminiProvider(LLMProvider):
             )
         else:
             full_prompt = (
-                f"You are the BIS Intelligence Assistant by Dev Dynasty (SIH267107), an expert on Bureau of Indian Standards (BIS). "
+                f"You are the BIS Intelligence Assistant by Dev Dynasty (SIH26107), an expert on Bureau of Indian Standards (BIS). "
                 f"Use the following retrieved evidence to answer the user's question precisely and helpfully. "
                 f"Present the answer clearly — do NOT repeat the same information twice. "
                 f"Do NOT say 'I haven't found information' — instead use the evidence provided. "

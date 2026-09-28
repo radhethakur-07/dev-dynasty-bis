@@ -258,7 +258,7 @@ export default function LandingPage() {
             }}
           >
             <SealBadge />
-            <span>Smart India Hackathon (SIH267107) · AI-Powered BIS Intelligence Assistant</span>
+            <span>Smart India Hackathon (SIH26107) · AI-Powered BIS Intelligence Assistant</span>
           </div>
 
           {/* Main Title — Fraunces display font */}
@@ -564,9 +564,8 @@ export default function LandingPage() {
                 <Link
                   key={idx}
                   href={cap.href}
-                  className={`group p-6 rounded-2xl flex flex-col justify-between space-y-4 transition-all ${
-                    isLarge ? "md:col-span-2 lg:col-span-1 lg:row-span-2" : ""
-                  }`}
+                  className={`group p-6 rounded-2xl flex flex-col justify-between space-y-4 transition-all ${isLarge ? "md:col-span-2 lg:col-span-1 lg:row-span-2" : ""
+                    }`}
                   style={{
                     backgroundColor: isLarge ? "var(--accent)" : "var(--surface-raised)",
                     border: `1px solid ${isLarge ? "transparent" : "var(--border)"}`,
@@ -656,7 +655,7 @@ export default function LandingPage() {
               className="text-2xl sm:text-3xl font-bold font-display"
               style={{ color: "var(--text-primary)" }}
             >
-              Why Dev Dynasty SIH267107 is Enterprise-Ready
+              Why Dev Dynasty SIH26107 is Enterprise-Ready
             </h2>
             <p
               className="text-sm max-w-xl mx-auto"

@@ -77,7 +77,7 @@ function LoginForm() {
             <LargeSeal />
             <div>
               <div className="text-white font-bold text-lg tracking-tight">BIS Intelligence</div>
-              <div className="text-white/60 text-xs font-mono">Dev Dynasty · SIH267107</div>
+              <div className="text-white/60 text-xs font-mono">Dev Dynasty · SIH26107</div>
             </div>
           </div>
 
@@ -108,7 +108,7 @@ function LoginForm() {
 
         {/* Bottom */}
         <div className="relative z-10">
-          <p className="text-white/40 text-[10px]">Smart India Hackathon 2024 · SIH267107</p>
+          <p className="text-white/40 text-[10px]">Smart India Hackathon 2024 · SIH26107</p>
         </div>
       </div>
 
@@ -128,7 +128,7 @@ function LoginForm() {
             </div>
             <div>
               <div className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>BIS Intelligence</div>
-              <div className="text-[11px] font-mono" style={{ color: "var(--text-muted)" }}>SIH267107</div>
+              <div className="text-[11px] font-mono" style={{ color: "var(--text-muted)" }}>SIH26107</div>
             </div>
           </div>
 

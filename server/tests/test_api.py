@@ -10,7 +10,7 @@ def test_health_check_endpoint():
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "ok"
-    assert data["problem_statement"] == "SIH267107"
+    assert data["problem_statement"] == "SIH26107"
     assert "demo_data_notice" in data
     assert data["demo_data_notice"] == "Demo / Sample / Not official"
     assert "GEMINI_API_KEY" not in str(data)

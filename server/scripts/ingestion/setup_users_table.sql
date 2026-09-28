@@ -1,5 +1,5 @@
 -- ============================================================
--- DEV DYNASTY — SIH267107: APP USERS TABLE SETUP
+-- DEV DYNASTY — SIH26107: APP USERS TABLE SETUP
 -- Run this in Supabase SQL Editor
 -- ============================================================
 

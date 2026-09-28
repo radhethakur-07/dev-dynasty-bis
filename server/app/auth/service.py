@@ -76,7 +76,7 @@ def send_verification_email(email: str, otp: str) -> bool:
                     <p style="margin-top: 16px; color: #64748b; font-size: 14px;">
                         This code expires in 10 minutes. If you didn't request this, please ignore this email.
                     </p>
-                    <p style="color: #94a3b8; font-size: 12px; margin-top: 24px;">SIH267107 • Smart India Hackathon</p>
+                    <p style="color: #94a3b8; font-size: 12px; margin-top: 24px;">SIH26107 • Smart India Hackathon</p>
                 </div>
                 """
             },

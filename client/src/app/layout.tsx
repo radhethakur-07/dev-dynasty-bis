@@ -14,7 +14,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "BIS Intelligence Assistant — Dev Dynasty SIH267107",
+  title: "BIS Intelligence Assistant — Dev Dynasty SIH26107",
   description:
     "AI-powered conversational intelligence for Bureau of Indian Standards. Discover Indian Standards, certification schemes, hallmarking regulations, and accredited testing laboratories.",
   keywords: ["BIS", "Indian Standards", "ISI Mark", "HUID", "Hallmarking", "Certification", "Testing Laboratories"],

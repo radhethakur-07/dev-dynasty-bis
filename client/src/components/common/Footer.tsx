@@ -68,7 +68,7 @@ export const Footer: React.FC = () => {
                 className="font-mono text-[10px]"
                 style={{ color: "var(--gold)", opacity: 0.85 }}
               >
-                SIH267107
+                SIH26107
               </span>
             </div>
           </div>
@@ -137,7 +137,7 @@ export const Footer: React.FC = () => {
             <span className="font-semibold" style={{ color: "var(--text-secondary)" }}>
               Disclaimer:{" "}
             </span>
-            Independent AI prototype for SIH267107. Not an official BIS authority. Verify certifications
+            Independent AI prototype for SIH26107. Not an official BIS authority. Verify certifications
             through authorized BIS offices and official Gazette notifications.
           </p>
         </div>

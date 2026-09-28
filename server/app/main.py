@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    description="Dev Dynasty — SIH267107: AI-Powered Intelligent Assistant for Indian Standards and BIS Services.",
+    description="Dev Dynasty — SIH26107: AI-Powered Intelligent Assistant for Indian Standards and BIS Services.",
     lifespan=lifespan
 )
 

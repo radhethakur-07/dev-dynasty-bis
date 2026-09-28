@@ -25,13 +25,13 @@ class Settings(BaseSettings):
     # App Metadata
     APP_NAME: str = "Dev Dynasty - BIS Intelligence Assistant"
     APP_VERSION: str = "1.0.0"
-    SIH_PROBLEM_ID: str = "SIH267107"
+    SIH_PROBLEM_ID: str = "SIH26107"
 
     # Strict Demo Flag
     DEMO_DATA_NOTICE: str = "Demo / Sample / Not official"
 
     # Auth Configuration
-    JWT_SECRET: str = "dev-dynasty-bis-jwt-secret-sih267107-change-in-production"
+    JWT_SECRET: str = "dev-dynasty-bis-jwt-secret-sih26107-change-in-production"
     JWT_EXPIRY_HOURS: int = 720
     BREVO_API_KEY: Optional[str] = None
     BREVO_SENDER_EMAIL: str = "noreply@devdynasty.bis"
