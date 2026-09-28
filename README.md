@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![Smart India Hackathon](https://img.shields.io/badge/Smart%20India%20Hackathon-SIH267107-blue?style=for-the-badge&logo=gov.in)](https://sih.gov.in)
+[![Smart India Hackathon](https://img.shields.io/badge/Smart%20India%20Hackathon-SIH26107-blue?style=for-the-badge&logo=gov.in)](https://sih.gov.in)
 [![Android APK](https://img.shields.io/badge/Android%20APK-Supported%20%26%20Ready-3DDC84?style=for-the-badge&logo=android)](https://github.com/radhethakur-07/dev-dynasty-bis)
 [![Next.js 14](https://img.shields.io/badge/Next.js-14.2.5-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110.0-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
@@ -14,7 +14,7 @@
 
 ### **AI-Powered Grounded Intelligence Platform for Indian Standards, Quality Control Orders (QCOs) & BIS Regulatory Services**
 
-*An end-to-end cross-device regulatory intelligence solution (Web & Android APK) built by **Team Dev Dynasty** for the **Smart India Hackathon (SIH267107)**.*
+*An end-to-end cross-device regulatory intelligence solution (Web & Android APK) built by **Team Dev Dynasty** for the **Smart India Hackathon (SIH26107)**.*
 
 [🌟 Live Demo (Vercel)](#-live-deployment) • [📱 Cross-Device & Android](#-cross-device--mobile-ecosystem) • [📖 Architecture](#-system-architecture) • [🚀 Quickstart](#-quickstart-guide) • [🧪 Test Suite](#-testing--quality-assurance) • [📑 API Reference](#-rest-api-reference)
 
@@ -336,7 +336,7 @@ npm test
 
 ## 👥 Team Dev Dynasty
 
-Built with dedication for **Smart India Hackathon (SIH267107)**.
+Built with dedication for **Smart India Hackathon (SIH26107)**.
 
 <div align="center">
   <b>Dedicated to enhancing Indian Standards compliance, MSME enablement, and consumer statutory protection.</b>
